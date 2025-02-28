@@ -25,10 +25,9 @@ base_business_demo模块中的配置文件application-prod.yaml有详细备注�
 ## 效果展示
 
 界面效果
-![]([https://github.com/MING789852/-/blob/main/%E6%96%B0%E5%BB%BA.png](https://github.com/MING789852/-/blob/main/%E7%95%8C%E9%9D%A2%E5%B1%95%E7%A4%BA.png))
-
-EXCEL导出效果
-![]([https://github.com/MING789852/-/blob/main/excel%E5%AF%BC%E5%87%BA%E6%95%88%E6%9E%9C.png))
+![](https://github.com/MING789852/-/blob/main/%E7%95%8C%E9%9D%A2%E5%B1%95%E7%A4%BA.png)
+EXCEL导出效果展示
+![](https://github.com/MING789852/-/blob/main/excel%E5%AF%BC%E5%87%BA%E6%95%88%E6%9E%9C.png)
 
 
 
