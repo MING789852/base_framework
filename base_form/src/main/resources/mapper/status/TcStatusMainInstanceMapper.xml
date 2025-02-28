@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.xm.status.mapper.TcStatusMainInstanceMapper">
+  <resultMap id="BaseResultMap" type="com.xm.status.domain.entity.TcStatusMainInstance">
+    <!--@mbg.generated-->
+    <!--@Table tc_status_main_instance-->
+    <id column="id" jdbcType="VARCHAR" property="id" />
+    <result column="status_main_model_id" jdbcType="VARCHAR" property="statusMainModelId" />
+    <result column="ref_id" jdbcType="VARCHAR" property="refId" />
+    <result column="ref_type" jdbcType="VARCHAR" property="refType" />
+    <result column="ref_filed1" jdbcType="VARCHAR" property="refFiled1" />
+    <result column="ref_filed2" jdbcType="VARCHAR" property="refFiled2" />
+    <result column="name" jdbcType="VARCHAR" property="name" />
+    <result column="code" jdbcType="VARCHAR" property="code" />
+    <result column="finish" jdbcType="BOOLEAN" property="finish" />
+    <result column="create_date" jdbcType="TIMESTAMP" property="createDate" />
+    <result column="create_user" jdbcType="VARCHAR" property="createUser" />
+    <result column="update_date" jdbcType="TIMESTAMP" property="updateDate" />
+    <result column="update_user" jdbcType="VARCHAR" property="updateUser" />
+  </resultMap>
+  <sql id="Base_Column_List">
+    <!--@mbg.generated-->
+    id, status_main_model_id, ref_id, ref_type, ref_filed1, ref_filed2, `name`, code, 
+    finish, create_date, create_user, update_date, update_user
+  </sql>
+</mapper>

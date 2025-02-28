@@ -1,0 +1,41 @@
+server:
+  port: 8190
+  servlet:
+    context-path: /demo
+spring:
+  rabbitmq:
+    virtual-host: /
+    #确认消息已发送到交换机（Exchange）
+    publisher-confirm-type: correlated
+    #确认消息已发送到队列（Queue）
+    publisher-returns: true
+  main:
+    allow-bean-definition-overriding: true
+  jackson:
+#    date-format: yyyy-MM-dd HH:mm:ss
+    time-zone: GMT+8
+  mvc:
+    path match:
+      matching-strategy: path_pattern_parser
+  profiles:
+    active: local
+#    active: dev
+#    active: prod
+  servlet:
+    multipart:
+      max-file-size: 100MB
+      max-request-size: 100MB
+  batch:
+    job:
+      #设置为 false -需要jobLaucher.run执行
+      enabled: false
+mybatis-plus:
+  configuration:
+    default-enum-type-handler: com.baomidou.mybatisplus.core.handlers.MybatisEnumTypeHandler
+    # 是否开启自动驼峰命名规则映射
+    map-underscore-to-camel-case: true
+    log-impl: org.apache.ibatis.logging.slf4j.Slf4jImpl
+  global-config:
+    db-config:
+      update-strategy: not_null
+      id-type: auto

@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.xm.otherSystem.mapper.DDeptNumMapper">
+  <resultMap id="BaseResultMap" type="com.xm.otherSystem.domain.entity.DDeptNum">
+    <!--@mbg.generated-->
+    <!--@Table d_dept_num-->
+    <id column="id" jdbcType="VARCHAR" property="id" />
+    <result column="factory" jdbcType="VARCHAR" property="factory" />
+    <result column="name" jdbcType="VARCHAR" property="name" />
+    <result column="now_num" jdbcType="INTEGER" property="nowNum" />
+    <result column="now_num_base" jdbcType="INTEGER" property="nowNumBase" />
+    <result column="expect_num" jdbcType="INTEGER" property="expectNum" />
+    <result column="dimission_num" jdbcType="INTEGER" property="dimissionNum" />
+    <result column="parent_id" jdbcType="VARCHAR" property="parentId" />
+    <result column="level" jdbcType="INTEGER" property="level" />
+    <result column="orders" jdbcType="BIGINT" property="orders" />
+    <result column="update_time" jdbcType="TIMESTAMP" property="updateTime" />
+  </resultMap>
+  <sql id="Base_Column_List">
+    <!--@mbg.generated-->
+    id, factory, `name`, now_num, now_num_base, expect_num, dimission_num, parent_id, 
+    `level`, orders, update_time
+  </sql>
+</mapper>

@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.xm.module.dict.mapper.TcDictGroupMapper">
+  <resultMap id="BaseResultMap" type="com.xm.module.dict.domain.entity.TcDictGroup">
+    <!--@mbg.generated-->
+    <!--@Table tc_dict_group-->
+    <id column="id" jdbcType="VARCHAR" property="id" />
+    <result column="group_key" jdbcType="VARCHAR" property="groupKey" />
+    <result column="group_name" jdbcType="VARCHAR" property="groupName" />
+    <result column="judge_enable" jdbcType="INTEGER" property="judgeEnable" />
+    <result column="create_user" jdbcType="VARCHAR" property="createUser" />
+    <result column="create_date" jdbcType="DATE" property="createDate" />
+    <result column="update_user" jdbcType="VARCHAR" property="updateUser" />
+    <result column="update_date" jdbcType="DATE" property="updateDate" />
+  </resultMap>
+  <sql id="Base_Column_List">
+    <!--@mbg.generated-->
+    id, group_key, group_name, judge_enable, create_user, create_date, update_user, update_date
+  </sql>
+</mapper>

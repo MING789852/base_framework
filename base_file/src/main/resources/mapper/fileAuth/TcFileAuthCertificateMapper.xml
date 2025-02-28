@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.xm.fileAuth.mapper.TcFileAuthCertificateMapper">
+  <resultMap id="BaseResultMap" type="com.xm.fileAuth.domain.entity.TcFileAuthCertificate">
+    <!--@mbg.generated-->
+    <!--@Table tc_file_auth_certificate-->
+    <id column="id" jdbcType="VARCHAR" property="id" />
+    <result column="file_id" jdbcType="VARCHAR" property="fileId" />
+    <result column="file_name" jdbcType="VARCHAR" property="fileName" />
+    <result column="user_id" jdbcType="VARCHAR" property="userId" />
+    <result column="user_name" jdbcType="VARCHAR" property="userName" />
+    <result column="apply_time" jdbcType="TIMESTAMP" property="applyTime" />
+    <result column="effective_time" jdbcType="TIMESTAMP" property="effectiveTime" />
+    <result column="operate_user_id" jdbcType="VARCHAR" property="operateUserId" />
+    <result column="operate_user" jdbcType="VARCHAR" property="operateUser" />
+    <result column="operate_time" jdbcType="TIMESTAMP" property="operateTime" />
+  </resultMap>
+  <sql id="Base_Column_List">
+    <!--@mbg.generated-->
+    id, file_id, file_name, user_id, user_name, apply_time, effective_time, operate_user_id, 
+    operate_user, operate_time
+  </sql>
+</mapper>

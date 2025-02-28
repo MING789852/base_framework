@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.xm.msg.mapper.TcMsgMapper">
+  <resultMap id="BaseResultMap" type="com.xm.msg.domain.entity.TcMsg">
+    <!--@mbg.generated-->
+    <!--@Table tc_msg-->
+    <id column="id" jdbcType="VARCHAR" property="id" />
+    <result column="business_type" jdbcType="VARCHAR" property="businessType" />
+    <result column="business_key" jdbcType="VARCHAR" property="businessKey" />
+    <result column="type" jdbcType="VARCHAR" property="type" />
+    <result column="info" jdbcType="LONGVARCHAR" property="info" />
+    <result column="des" jdbcType="VARCHAR" property="des" />
+    <result column="judge_finish" jdbcType="BOOLEAN" property="judgeFinish" />
+    <result column="user_id" jdbcType="VARCHAR" property="userId" />
+    <result column="create_date" jdbcType="TIMESTAMP" property="createDate" />
+    <result column="update_date" jdbcType="TIMESTAMP" property="updateDate" />
+    <result column="title" jdbcType="LONGVARCHAR" property="title" />
+    <result column="content" jdbcType="LONGVARCHAR" property="content" />
+  </resultMap>
+  <sql id="Base_Column_List">
+    <!--@mbg.generated-->
+    id, business_type, business_key, `type`, info, des, judge_finish, user_id, create_date, 
+    update_date, title, content
+  </sql>
+</mapper>

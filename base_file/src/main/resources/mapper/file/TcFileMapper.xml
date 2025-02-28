@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.xm.file.mapper.TcFileMapper">
+  <resultMap id="BaseResultMap" type="com.xm.file.domain.entity.TcFile">
+    <!--@mbg.generated-->
+    <!--@Table tc_file-->
+    <id column="id" jdbcType="VARCHAR" property="id" />
+    <result column="status" jdbcType="VARCHAR" property="status" />
+    <result column="original_file_name" jdbcType="VARCHAR" property="originalFileName" />
+    <result column="file_name" jdbcType="VARCHAR" property="fileName" />
+    <result column="ext_name" jdbcType="VARCHAR" property="extName" />
+    <result column="file_size" jdbcType="BIGINT" property="fileSize" />
+    <result column="path" jdbcType="LONGVARCHAR" property="path" />
+    <result column="create_user" jdbcType="VARCHAR" property="createUser" />
+    <result column="create_date" jdbcType="DATE" property="createDate" />
+    <result column="update_user" jdbcType="VARCHAR" property="updateUser" />
+    <result column="update_date" jdbcType="DATE" property="updateDate" />
+    <result column="md5" jdbcType="VARCHAR" property="md5" />
+  </resultMap>
+  <sql id="Base_Column_List">
+    <!--@mbg.generated-->
+    id, `status`, original_file_name, file_name, ext_name, file_size, `path`, create_user, 
+    create_date, update_user, update_date, md5
+  </sql>
+
+</mapper>

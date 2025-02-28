@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.xm.form.mapper.TcFormDynamicFieldMapper">
+  <resultMap id="BaseResultMap" type="com.xm.form.domain.entity.TcFormDynamicField">
+    <!--@mbg.generated-->
+    <!--@Table tc_form_dynamic_field-->
+    <id column="id" jdbcType="VARCHAR" property="id" />
+    <result column="ref_id" jdbcType="VARCHAR" property="refId" />
+    <result column="ref_type" jdbcType="VARCHAR" property="refType" />
+    <result column="form_ins_id" jdbcType="VARCHAR" property="formInsId" />
+    <result column="form_detail_id" jdbcType="VARCHAR" property="formDetailId" />
+    <result column="field_text" jdbcType="VARCHAR" property="fieldText" />
+    <result column="field_big_text" jdbcType="LONGVARCHAR" property="fieldBigText" />
+    <result column="field_date" jdbcType="DATE" property="fieldDate" />
+  </resultMap>
+  <sql id="Base_Column_List">
+    <!--@mbg.generated-->
+    id, ref_id, ref_type, form_ins_id, form_detail_id, field_text, field_big_text, field_date
+  </sql>
+</mapper>

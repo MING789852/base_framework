@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.xm.flowable.mapper.TcFlowableElementsMapper">
+  <resultMap id="BaseResultMap" type="com.xm.flowable.domain.entity.TcFlowableElements">
+    <!--@mbg.generated-->
+    <!--@Table tc_flowable_elements-->
+    <id column="process_definition_key" jdbcType="VARCHAR" property="processDefinitionKey" />
+    <id column="element_id" jdbcType="VARCHAR" property="elementId" />
+    <result column="process_definition_name" jdbcType="VARCHAR" property="processDefinitionName" />
+    <result column="element_type" jdbcType="VARCHAR" property="elementType" />
+    <result column="element_x" jdbcType="DECIMAL" property="elementX" />
+    <result column="element_y" jdbcType="DECIMAL" property="elementY" />
+    <result column="text_x" jdbcType="DECIMAL" property="textX" />
+    <result column="text_y" jdbcType="DECIMAL" property="textY" />
+    <result column="assignee" jdbcType="VARCHAR" property="assignee" />
+    <result column="assignee_name" jdbcType="VARCHAR" property="assigneeName" />
+    <result column="source_node_Id" jdbcType="VARCHAR" property="sourceNodeId" />
+    <result column="target_node_Id" jdbcType="VARCHAR" property="targetNodeId" />
+    <result column="content1" jdbcType="VARCHAR" property="content1" />
+    <result column="content2" jdbcType="VARCHAR" property="content2" />
+    <result column="content3" jdbcType="VARCHAR" property="content3" />
+    <result column="content4" jdbcType="VARCHAR" property="content4" />
+    <result column="element_name" jdbcType="VARCHAR" property="elementName" />
+  </resultMap>
+  <sql id="Base_Column_List">
+    <!--@mbg.generated-->
+    process_definition_key, element_id, process_definition_name, element_type, element_x, 
+    element_y, text_x, text_y, assignee, assignee_name, source_node_Id, target_node_Id, 
+    content1, content2, content3, content4, element_name
+  </sql>
+</mapper>

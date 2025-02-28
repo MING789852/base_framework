@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.xm.auth.mapper.TcButtonMapper">
+  <resultMap id="BaseResultMap" type="com.xm.auth.domain.entity.TcButton">
+    <!--@mbg.generated-->
+    <!--@Table tc_button-->
+    <id column="id" jdbcType="VARCHAR" property="id" />
+    <result column="router_id" jdbcType="VARCHAR" property="routerId" />
+    <result column="button_icon" jdbcType="VARCHAR" property="buttonIcon" />
+    <result column="button_code" jdbcType="VARCHAR" property="buttonCode" />
+    <result column="button_name" jdbcType="VARCHAR" property="buttonName" />
+    <result column="judge_enable" jdbcType="INTEGER" property="judgeEnable" />
+    <result column="create_user" jdbcType="VARCHAR" property="createUser" />
+    <result column="create_date" jdbcType="DATE" property="createDate" />
+    <result column="update_user" jdbcType="VARCHAR" property="updateUser" />
+    <result column="update_date" jdbcType="DATE" property="updateDate" />
+  </resultMap>
+  <sql id="Base_Column_List">
+    <!--@mbg.generated-->
+    id, router_id, button_icon, button_code, button_name, judge_enable, create_user, 
+    create_date, update_user, update_date
+  </sql>
+</mapper>

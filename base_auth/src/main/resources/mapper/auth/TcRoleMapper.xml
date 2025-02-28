@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.xm.auth.mapper.TcRoleMapper">
+  <resultMap id="BaseResultMap" type="com.xm.auth.domain.entity.TcRole">
+    <!--@mbg.generated-->
+    <!--@Table tc_role-->
+    <id column="id" jdbcType="VARCHAR" property="id" />
+    <result column="role_code" jdbcType="VARCHAR" property="roleCode" />
+    <result column="role_name" jdbcType="VARCHAR" property="roleName" />
+    <result column="judge_enable" jdbcType="INTEGER" property="judgeEnable" />
+    <result column="create_user" jdbcType="VARCHAR" property="createUser" />
+    <result column="create_date" jdbcType="DATE" property="createDate" />
+    <result column="update_user" jdbcType="VARCHAR" property="updateUser" />
+    <result column="update_date" jdbcType="DATE" property="updateDate" />
+  </resultMap>
+  <sql id="Base_Column_List">
+    <!--@mbg.generated-->
+    id, role_code, role_name, judge_enable, create_user, create_date, update_user, update_date
+  </sql>
+
+  <select id="selectUserByRoleId" resultType="com.xm.auth.domain.vo.RoleRelUserVo">
+    select *
+    from (select tu.id        as userId,
+                 tu.nick_name as userName
+          from tc_user tu
+          where tu.id in (select ur.user_id
+                          from tc_user_role_rel ur
+                          where ur.role_id = #{roleId,jdbcType=VARCHAR} and ur.judge_enable = 1)
+            and tu.judge_enable = 1) temp ${ew.customSqlSegment}
+  </select>
+</mapper>

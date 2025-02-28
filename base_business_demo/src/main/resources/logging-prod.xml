@@ -1,0 +1,128 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+    <contextName>logFile</contextName>
+    <!-- 日志文件存放的路径【可替换】 -->
+    <property name="LOG_PATH" value="logs"/>
+    <!--日志格式  %logger默认不给长度，显示全类路径名不使用缩写-->
+    <!--    <property name="LOG_PATTERN"  value="%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"/>-->
+    <property name="LOG_PATTERN"  value="%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger - %msg%n"/>
+    <!-- 应用名称【可替换】 -->
+    <property name="APPDIR" value="sys"/>
+
+    <!-- error file -->
+    <appender name="FILE_ERROR" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${LOG_PATH}/log-error.log</file>
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <fileNamePattern>${LOG_PATH}/${APPDIR}/error/log-error-%d{yyyy-MM-dd}.%i.log</fileNamePattern>
+            <timeBasedFileNamingAndTriggeringPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedFNATP">
+                <maxFileSize>100MB</maxFileSize>
+            </timeBasedFileNamingAndTriggeringPolicy>
+            <maxHistory>30</maxHistory>
+        </rollingPolicy>
+        <append>true</append>
+        <encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
+            <pattern>${LOG_PATTERN}</pattern>
+            <charset>utf-8</charset>
+        </encoder>
+        <filter class="ch.qos.logback.classic.filter.LevelFilter">
+            <level>error</level>
+            <onMatch>ACCEPT</onMatch>
+            <onMismatch>DENY</onMismatch>
+        </filter>
+    </appender>
+
+    <!-- info and debug file -->
+    <appender name="FILE_INFO" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${LOG_PATH}/log-info.log</file>
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <fileNamePattern>${LOG_PATH}/${APPDIR}/info/log-info-%d{yyyy-MM-dd}.%i.log</fileNamePattern>
+            <timeBasedFileNamingAndTriggeringPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedFNATP">
+                <maxFileSize>100MB</maxFileSize>
+            </timeBasedFileNamingAndTriggeringPolicy>
+            <maxHistory>30</maxHistory>
+        </rollingPolicy>
+        <append>true</append>
+        <encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
+            <pattern>${LOG_PATTERN}</pattern>
+            <charset>utf-8</charset>
+        </encoder>
+        <filter class="ch.qos.logback.classic.filter.LevelFilter">
+            <level>info</level>
+            <onMatch>ACCEPT</onMatch>
+            <onMismatch>DENY</onMismatch>
+        </filter>
+    </appender>
+
+    <appender name="FILE_DEBUG" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${LOG_PATH}/log-debug.log</file>
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <fileNamePattern>${LOG_PATH}/${APPDIR}/debug/log-debug-%d{yyyy-MM-dd}.%i.log</fileNamePattern>
+            <timeBasedFileNamingAndTriggeringPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedFNATP">
+                <maxFileSize>100MB</maxFileSize>
+            </timeBasedFileNamingAndTriggeringPolicy>
+            <maxHistory>30</maxHistory>
+        </rollingPolicy>
+        <append>true</append>
+        <encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
+            <pattern>${LOG_PATTERN}</pattern>
+            <charset>utf-8</charset>
+        </encoder>
+        <filter class="ch.qos.logback.classic.filter.LevelFilter">
+            <level>debug</level>
+            <onMatch>ACCEPT</onMatch>
+            <onMismatch>DENY</onMismatch>
+        </filter>
+    </appender>
+
+    <!-- console -->
+    <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <!--            <pattern>%d %level [%thread] %logger{10} [%file:%line] %msg%n</pattern>-->
+            <pattern>${LOG_PATTERN}</pattern>
+            <charset>utf-8</charset>
+        </encoder>
+        <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+            <level>debug</level>
+        </filter>
+    </appender>
+
+
+<!--    <logger name="org.springframework.transaction" level="debug" additivity="false">-->
+<!--        <appender-ref ref="STDOUT"/>-->
+<!--        <appender-ref ref="FILE_INFO"/>-->
+<!--        <appender-ref ref="FILE_ERROR"/>-->
+<!--        <appender-ref ref="FILE_DEBUG"/>-->
+<!--    </logger>-->
+<!--    <logger name="org.springframework.jdbc" level="debug" additivity="false">-->
+<!--        <appender-ref ref="STDOUT"/>-->
+<!--        <appender-ref ref="FILE_INFO"/>-->
+<!--        <appender-ref ref="FILE_ERROR"/>-->
+<!--        <appender-ref ref="FILE_DEBUG"/>-->
+<!--    </logger>-->
+<!--    <logger name="org.apache.ibatis.transaction" level="debug" additivity="false">-->
+<!--        <appender-ref ref="STDOUT"/>-->
+<!--        <appender-ref ref="FILE_INFO"/>-->
+<!--        <appender-ref ref="FILE_ERROR"/>-->
+<!--        <appender-ref ref="FILE_DEBUG"/>-->
+<!--    </logger>-->
+
+    <Logger name="com.xm" level="debug" additivity="false">
+        <appender-ref ref="STDOUT"/>
+        <appender-ref ref="FILE_INFO"/>
+        <appender-ref ref="FILE_ERROR"/>
+        <appender-ref ref="FILE_DEBUG"/>
+    </Logger>
+<!--    <Logger name="org.flowable" level="info" additivity="false">-->
+<!--        <appender-ref ref="STDOUT"/>-->
+<!--        <appender-ref ref="FILE_INFO"/>-->
+<!--        <appender-ref ref="FILE_ERROR"/>-->
+<!--        <appender-ref ref="FILE_DEBUG"/>-->
+<!--    </Logger>-->
+
+    <root level="info">
+        <appender-ref ref="STDOUT"/>
+        <appender-ref ref="FILE_INFO"/>
+        <appender-ref ref="FILE_ERROR"/>
+        <appender-ref ref="FILE_DEBUG"/>
+    </root>
+</configuration>

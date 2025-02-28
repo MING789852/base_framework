@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.xm.fileAuth.mapper.TcFileApplyMapper">
+  <resultMap id="BaseResultMap" type="com.xm.fileAuth.domain.entity.TcFileApply">
+    <!--@mbg.generated-->
+    <!--@Table tc_file_apply-->
+    <result column="id" jdbcType="VARCHAR" property="id" />
+    <result column="ref_id" jdbcType="VARCHAR" property="refId" />
+    <result column="ref_type" jdbcType="VARCHAR" property="refType" />
+    <result column="user_id" jdbcType="VARCHAR" property="userId" />
+    <result column="user_name" jdbcType="VARCHAR" property="userName" />
+    <result column="apply_remark" jdbcType="VARCHAR" property="applyRemark" />
+    <result column="apply_time" jdbcType="TIMESTAMP" property="applyTime" />
+    <result column="effective_time" jdbcType="TIMESTAMP" property="effectiveTime" />
+    <result column="status" jdbcType="INTEGER" property="status" />
+    <result column="operate_user_id" jdbcType="VARCHAR" property="operateUserId" />
+    <result column="operate_user" jdbcType="VARCHAR" property="operateUser" />
+    <result column="operate_time" jdbcType="TIMESTAMP" property="operateTime" />
+  </resultMap>
+  <sql id="Base_Column_List">
+    <!--@mbg.generated-->
+    id, ref_id, ref_type, user_id, user_name, apply_remark, apply_time, effective_time, 
+    `status`, operate_user_id, operate_user, operate_time
+  </sql>
+</mapper>

@@ -1,0 +1,8 @@
+.beautify-flow {
+  background-size: cover;
+  display: inline-block;
+  height: 20px;
+  vertical-align: middle;
+  width: 20px;
+  background-image: url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABQAAAAUCAYAAACNiR0NAAAAAXNSR0IArs4c6QAAAZRJREFUOE+t1DtrVFEUxfHfYIKFRYoY0qmRQLAX20isBJ+Igg9CIF9AMPgl7EyVxgeCim9TiIVY2FhKxCKBGCQRtFCwDSTEu2FfuIzOnBn0NnPvsM9/r7PWPqel/2cCK52WtfrkHcMbTOLd39aWgHtxBnewhfN4lL9PMIgZPMPPaFACRvFtvMAFnMbjBL7EU5zENO71AhxIQKh8jnm8zS1fw6lsFspjB0WFURPQBxjD4YZvH7BaBXSxhpWAhzCagDWsY1fl5wF8zv/34WC+f8dyJw+H8Kuh5ivG8apKdwoj+IGA1E2jfKhbKE2FAVxI2H1czmb704r47KqwOWJ7couhJIKJALarxMPDj5jt1cOABuwLYh43cA6LOI7rGUg0iZEqprwbS1XCcdS+pfknOsxhzOvdbikH7DWO4lOOy2aHk3IVt7qdlCbsYTVrV9KzEBBz+L5K+0h6+Mdxbk+5HXYJO22rhms1pcuhF1jxcqoV/hdYM5S5akRuIIY2PGvfZlFZXVArjDN5Fjf/BVa6HHpW1Sz8DSI6VSNIafihAAAAAElFTkSuQmCC");
+}

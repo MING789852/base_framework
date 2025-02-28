@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.xm.auth.mapper.TcDeptMapper">
+  <resultMap id="BaseResultMap" type="com.xm.auth.domain.entity.TcDept">
+    <!--@mbg.generated-->
+    <!--@Table tc_dept-->
+    <id column="id" jdbcType="VARCHAR" property="id" />
+    <result column="factory" jdbcType="VARCHAR" property="factory" />
+    <result column="name" jdbcType="VARCHAR" property="name" />
+    <result column="now_num" jdbcType="INTEGER" property="nowNum" />
+    <result column="now_num_base" jdbcType="INTEGER" property="nowNumBase" />
+    <result column="expect_num" jdbcType="INTEGER" property="expectNum" />
+    <result column="dimission_num" jdbcType="INTEGER" property="dimissionNum" />
+    <result column="parent_id" jdbcType="VARCHAR" property="parentId" />
+    <result column="level" jdbcType="INTEGER" property="level" />
+    <result column="orders" jdbcType="BIGINT" property="orders" />
+    <result column="update_time" jdbcType="TIMESTAMP" property="updateTime" />
+    <result column="judge_enable" jdbcType="INTEGER" property="judgeEnable" />
+  </resultMap>
+  <resultMap id="BaseResultMapVo" type="com.xm.auth.domain.vo.TcDeptVo" extends="BaseResultMap">
+
+  </resultMap>
+  <sql id="Base_Column_List">
+    <!--@mbg.generated-->
+    id, factory, `name`, now_num, now_num_base, expect_num, dimission_num, parent_id, 
+    `level`, orders, update_time, judge_enable
+  </sql>
+
+  <select id="selectByList" resultMap="BaseResultMapVo">
+    select <include refid="Base_Column_List"/> from tc_dept ${ew.customSqlSegment}
+  </select>
+
+  <select id="findById" resultMap="BaseResultMapVo">
+    select <include refid="Base_Column_List"/> from tc_dept where id=#{id,jdbcType=VARCHAR}
+  </select>
+</mapper>

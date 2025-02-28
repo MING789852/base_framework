@@ -1,0 +1,115 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>com.xm</groupId>
+        <artifactId>base_parent</artifactId>
+        <version>1.0-SNAPSHOT</version>
+    </parent>
+
+    <artifactId>base_business_demo</artifactId>
+
+
+    <dependencies>
+        <!-- 授权模块包括系统用户角色路由等操作，需要在base_redis和base_caffeine二选一，取决于yaml配置-->
+        <dependency>
+            <groupId>com.xm</groupId>
+            <artifactId>base_auth</artifactId>
+            <version>1.0-SNAPSHOT</version>
+        </dependency>
+<!--        <dependency>-->
+<!--            <groupId>com.xm</groupId>-->
+<!--            <artifactId>base_redis</artifactId>-->
+<!--            <version>1.0-SNAPSHOT</version>-->
+<!--        </dependency>-->
+        <dependency>
+            <groupId>com.xm</groupId>
+            <artifactId>base_caffeine</artifactId>
+            <version>1.0-SNAPSHOT</version>
+        </dependency>
+        <!-- 动态表单-->
+        <dependency>
+            <groupId>com.xm</groupId>
+            <artifactId>base_form</artifactId>
+            <version>1.0-SNAPSHOT</version>
+        </dependency>
+        <!-- flowable流程引擎，在没有开启yaml中flowable配置时尽量不要打开此模块，不然会自动生成多余的表-->
+        <dependency>
+            <groupId>com.xm</groupId>
+            <artifactId>base_flowable</artifactId>
+            <version>1.0-SNAPSHOT</version>
+        </dependency>
+        <!-- 消息发送,目前只支持钉钉消息和邮件消息，都需要在yaml中配置才能启动-->
+        <dependency>
+            <groupId>com.xm</groupId>
+            <artifactId>base_msg</artifactId>
+            <version>1.0-SNAPSHOT</version>
+        </dependency>
+<!--        <dependency>-->
+<!--            <groupId>com.xm</groupId>-->
+<!--            <artifactId>base_dingding</artifactId>-->
+<!--            <version>1.0-SNAPSHOT</version>-->
+<!--        </dependency>-->
+        <dependency>
+            <groupId>com.xm</groupId>
+            <artifactId>base_email</artifactId>
+            <version>1.0-SNAPSHOT</version>
+        </dependency>
+        <!-- 文件-->
+        <dependency>
+            <groupId>com.xm</groupId>
+            <artifactId>base_file</artifactId>
+            <version>1.0-SNAPSHOT</version>
+        </dependency>
+        <!-- 数据库基础配置，包含序号生成工具，数据库配置工具，字典管理，列配置管理-->
+        <dependency>
+            <groupId>com.xm</groupId>
+            <artifactId>base_database</artifactId>
+            <version>1.0-SNAPSHOT</version>
+        </dependency>
+        <!-- mysql 连接-->
+        <dependency>
+            <groupId>com.mysql</groupId>
+            <artifactId>mysql-connector-j</artifactId>
+            <exclusions>
+                <exclusion>
+                    <groupId>com.google.protobuf</groupId>
+                    <artifactId>protobuf-java</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+        <!-- mssql-jdbc -->
+        <dependency>
+            <groupId>com.microsoft.sqlserver</groupId>
+            <artifactId>mssql-jdbc</artifactId>
+        </dependency>
+        <!-- https://mvnrepository.com/artifact/com.googlecode.aviator/aviator -->
+        <dependency>
+            <groupId>com.googlecode.aviator</groupId>
+            <artifactId>aviator</artifactId>
+            <version>5.4.1</version>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <finalName>base_rd</finalName>
+        <plugins>
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+                <version>${springBoot.version}</version>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <configuration>
+                    <source>8</source>
+                    <target>8</target>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+</project>

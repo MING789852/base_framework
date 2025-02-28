@@ -1,0 +1,28 @@
+@font-face {
+  font-family: 'Electronic';
+  src: url('../assets/fonts/FX-LED.ttf') format('truetype');
+}
+
+.text-gradient {
+  /* 背景渐变 */
+  background-image: linear-gradient(to bottom, #e5e4ea, #5EA8F2);
+  /* 元素背景延伸到文本 */
+  -webkit-background-clip: text;
+  /* 文本字符填充颜色透明 */
+  -webkit-text-fill-color: transparent;
+}
+
+.bg-green{
+  background-color: #67C23A;
+  color: white;
+}
+
+.bg-red{
+  background-color:#F56C6C;
+  color: white;
+}
+
+.bg-yellow{
+  background-color: #E6A23C;
+  color: white;
+}

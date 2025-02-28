@@ -1,0 +1,9 @@
+enum DictQueryTypeEnum {
+  TREE = "TREE",
+  COMMON = "COMMON",
+  DEPARTMENT_TREE="DEPARTMENT_TREE",
+  DEPARTMENT_COMMON="DEPARTMENT_COMMON",
+  USER_COMMON="USER_COMMON"
+}
+
+export default DictQueryTypeEnum

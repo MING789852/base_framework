@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.xm.module.dict.mapper.TcDictMapper">
+  <resultMap id="BaseResultMap" type="com.xm.module.dict.domain.entity.TcDict">
+    <!--@mbg.generated-->
+    <!--@Table tc_dict-->
+    <id column="id" jdbcType="VARCHAR" property="id" />
+    <result column="group_key" jdbcType="VARCHAR" property="groupKey" />
+    <result column="dict_code" jdbcType="VARCHAR" property="dictCode" />
+    <result column="dict_label" jdbcType="VARCHAR" property="dictLabel" />
+    <result column="judge_enable" jdbcType="INTEGER" property="judgeEnable" />
+    <result column="create_user" jdbcType="VARCHAR" property="createUser" />
+    <result column="create_date" jdbcType="DATE" property="createDate" />
+    <result column="update_user" jdbcType="VARCHAR" property="updateUser" />
+    <result column="update_date" jdbcType="DATE" property="updateDate" />
+    <result column="level" jdbcType="INTEGER" property="level" />
+    <result column="parent_id" jdbcType="VARCHAR" property="parentId" />
+  </resultMap>
+  <sql id="Base_Column_List">
+    <!--@mbg.generated-->
+    id, group_key, dict_code, dict_label, judge_enable, create_user, create_date, update_user, 
+    update_date, `level`, parent_id
+  </sql>
+</mapper>

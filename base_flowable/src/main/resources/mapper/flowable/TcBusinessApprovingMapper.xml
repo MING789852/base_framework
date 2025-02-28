@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.xm.flowable.mapper.TcBusinessApprovingMapper">
+  <resultMap id="BaseResultMap" type="com.xm.flowable.domain.entity.TcBusinessApproving">
+    <!--@mbg.generated-->
+    <!--@Table tc_business_approving-->
+    <id column="id" jdbcType="VARCHAR" property="id" />
+    <result column="business_id" jdbcType="VARCHAR" property="businessId" />
+    <result column="business_type" jdbcType="VARCHAR" property="businessType" />
+    <result column="user_id" jdbcType="VARCHAR" property="userId" />
+    <result column="user_name" jdbcType="VARCHAR" property="userName" />
+    <result column="create_date" jdbcType="DATE" property="createDate" />
+  </resultMap>
+  <sql id="Base_Column_List">
+    <!--@mbg.generated-->
+    id, business_id, business_type, user_id, user_name, create_date
+  </sql>
+
+  <select id="selectHisActInst" resultType="com.xm.flowable.domain.query.ActInst">
+    select ID_ as id, TASK_ID_ as taskId, EXECUTION_ID_ as executionId
+    from act_hi_actinst
+    ${ew.customSqlSegment};
+  </select>
+
+  <select id="selectRuActInst" resultType="com.xm.flowable.domain.query.ActInst">
+    select ID_ as id, TASK_ID_ as taskId, EXECUTION_ID_ as executionId
+    from act_ru_actinst
+    ${ew.customSqlSegment};
+  </select>
+
+  <delete id="deleteHisTask">
+    delete from act_hi_taskinst
+    ${ew.customSqlSegment}
+  </delete>
+
+  <delete id="deleteHisVar">
+    delete from act_hi_varinst
+    ${ew.customSqlSegment}
+  </delete>
+
+  <delete id="deleteHisIdentity">
+    delete from act_hi_identitylink
+    ${ew.customSqlSegment}
+  </delete>
+
+  <delete id="deleteHisActInst">
+    delete from act_hi_actinst
+    ${ew.customSqlSegment}
+  </delete>
+
+  <delete id="deleteRuExecution">
+    delete from act_ru_execution
+    ${ew.customSqlSegment}
+  </delete>
+
+  <delete id="deleteRuTask">
+    delete from act_ru_task
+    ${ew.customSqlSegment}
+  </delete>
+
+  <delete id="deleteRuActInst">
+    delete from act_ru_actinst
+    ${ew.customSqlSegment}
+  </delete>
+
+  <delete id="deleteRuVar">
+    delete from act_ru_variable
+    ${ew.customSqlSegment}
+  </delete>
+</mapper>

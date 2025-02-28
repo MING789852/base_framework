@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.xm.auth.mapper.TcRouterMapper">
+  <resultMap id="BaseResultMap" type="com.xm.auth.domain.entity.TcRouter">
+    <!--@mbg.generated-->
+    <!--@Table tc_router-->
+    <id column="id" jdbcType="VARCHAR" property="id" />
+    <result column="path" jdbcType="VARCHAR" property="path" />
+    <result column="name" jdbcType="VARCHAR" property="name" />
+    <result column="title" jdbcType="VARCHAR" property="title" />
+    <result column="redirect" jdbcType="VARCHAR" property="redirect" />
+    <result column="icon" jdbcType="VARCHAR" property="icon" />
+    <result column="component" jdbcType="VARCHAR" property="component" />
+    <result column="show_link" jdbcType="BOOLEAN" property="showLink" />
+    <result column="rank_int" jdbcType="INTEGER" property="rankInt" />
+    <result column="keep_Alive" jdbcType="BOOLEAN" property="keepAlive" />
+    <result column="level" jdbcType="INTEGER" property="level" />
+    <result column="has_button" jdbcType="BOOLEAN" property="hasButton" />
+    <result column="parent_id" jdbcType="VARCHAR" property="parentId" />
+    <result column="judge_enable" jdbcType="INTEGER" property="judgeEnable" />
+    <result column="create_user" jdbcType="VARCHAR" property="createUser" />
+    <result column="create_date" jdbcType="DATE" property="createDate" />
+    <result column="update_user" jdbcType="VARCHAR" property="updateUser" />
+    <result column="update_date" jdbcType="DATE" property="updateDate" />
+    <result column="hidden_Tag" jdbcType="BOOLEAN" property="hiddenTag" />
+    <result column="judge_public" jdbcType="BOOLEAN" property="judgePublic" />
+    <result column="fullscreen" jdbcType="BOOLEAN" property="fullscreen" />
+  </resultMap>
+  <sql id="Base_Column_List">
+    <!--@mbg.generated-->
+    id, `path`, `name`, title, redirect, icon, component, show_link, rank_int, keep_Alive, 
+    `level`, has_button, parent_id, judge_enable, create_user, create_date, update_user, 
+    update_date, hidden_Tag, judge_public, fullscreen
+  </sql>
+</mapper>

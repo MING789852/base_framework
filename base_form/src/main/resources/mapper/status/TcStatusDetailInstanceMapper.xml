@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.xm.status.mapper.TcStatusDetailInstanceMapper">
+  <resultMap id="BaseResultMap" type="com.xm.status.domain.entity.TcStatusDetailInstance">
+    <!--@mbg.generated-->
+    <!--@Table tc_status_detail_instance-->
+    <id column="id" jdbcType="VARCHAR" property="id" />
+    <result column="ref_id" jdbcType="VARCHAR" property="refId" />
+    <result column="ref_type" jdbcType="VARCHAR" property="refType" />
+    <result column="ref_filed1" jdbcType="VARCHAR" property="refFiled1" />
+    <result column="ref_filed2" jdbcType="VARCHAR" property="refFiled2" />
+    <result column="sequence" jdbcType="INTEGER" property="sequence" />
+    <result column="status_main_model_id" jdbcType="VARCHAR" property="statusMainModelId" />
+    <result column="status_main_instance_id" jdbcType="VARCHAR" property="statusMainInstanceId" />
+    <result column="status_detail_model_id" jdbcType="VARCHAR" property="statusDetailModelId" />
+    <result column="form_main_model_id" jdbcType="VARCHAR" property="formMainModelId" />
+    <result column="form_main_instance_id" jdbcType="VARCHAR" property="formMainInstanceId" />
+    <result column="active" jdbcType="BOOLEAN" property="active" />
+    <result column="create_date" jdbcType="TIMESTAMP" property="createDate" />
+    <result column="create_user" jdbcType="VARCHAR" property="createUser" />
+    <result column="update_date" jdbcType="TIMESTAMP" property="updateDate" />
+    <result column="update_user" jdbcType="VARCHAR" property="updateUser" />
+  </resultMap>
+  <sql id="Base_Column_List">
+    <!--@mbg.generated-->
+    id, ref_id, ref_type, ref_filed1, ref_filed2, `sequence`, status_main_model_id, status_main_instance_id, 
+    status_detail_model_id, form_main_model_id, form_main_instance_id, active, create_date, 
+    create_user, update_date, update_user
+  </sql>
+</mapper>

@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.xm.form.mapper.TcFormDetailModelMapper">
+  <resultMap id="BaseResultMap" type="com.xm.form.domain.entity.TcFormDetailModel">
+    <!--@mbg.generated-->
+    <!--@Table tc_form_detail_model-->
+    <id column="id" jdbcType="VARCHAR" property="id" />
+    <result column="form_main_model_id" jdbcType="VARCHAR" property="formMainModelId" />
+    <result column="field_code" jdbcType="VARCHAR" property="fieldCode" />
+    <result column="field_name" jdbcType="VARCHAR" property="fieldName" />
+    <result column="field_type" jdbcType="VARCHAR" property="fieldType" />
+    <result column="other1" jdbcType="VARCHAR" property="other1" />
+    <result column="other2" jdbcType="VARCHAR" property="other2" />
+    <result column="other3" jdbcType="VARCHAR" property="other3" />
+    <result column="sequence" jdbcType="INTEGER" property="sequence" />
+    <result column="placeholder" jdbcType="VARCHAR" property="placeholder" />
+    <result column="required" jdbcType="BOOLEAN" property="required" />
+    <result column="judge_show" jdbcType="BOOLEAN" property="judgeShow" />
+    <result column="create_date" jdbcType="DATE" property="createDate" />
+    <result column="create_user" jdbcType="VARCHAR" property="createUser" />
+    <result column="update_date" jdbcType="DATE" property="updateDate" />
+    <result column="update_user" jdbcType="VARCHAR" property="updateUser" />
+  </resultMap>
+  <sql id="Base_Column_List">
+    <!--@mbg.generated-->
+    id, form_main_model_id, field_code, field_name, field_type, other1, other2, other3, 
+    `sequence`, placeholder, required, judge_show, create_date, create_user, update_date, 
+    update_user
+  </sql>
+</mapper>

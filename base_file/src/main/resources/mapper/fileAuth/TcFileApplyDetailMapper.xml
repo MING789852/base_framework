@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.xm.fileAuth.mapper.TcFileApplyDetailMapper">
+  <resultMap id="BaseResultMap" type="com.xm.fileAuth.domain.entity.TcFileApplyDetail">
+    <!--@mbg.generated-->
+    <!--@Table tc_file_apply_detail-->
+    <result column="id" jdbcType="VARCHAR" property="id" />
+    <result column="apply_id" jdbcType="VARCHAR" property="applyId" />
+    <result column="file_id" jdbcType="VARCHAR" property="fileId" />
+    <result column="file_name" jdbcType="VARCHAR" property="fileName" />
+  </resultMap>
+  <sql id="Base_Column_List">
+    <!--@mbg.generated-->
+    id, apply_id, file_id, file_name
+  </sql>
+</mapper>

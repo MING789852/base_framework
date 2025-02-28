@@ -1,0 +1,54 @@
+flowable:
+  #关闭定时任务job
+  async-executor-activate: false
+  #关闭无用功能
+  idm:
+    enabled: false
+  cmmn:
+    enabled: false
+  dmn:
+    enabled: false
+  app:
+    enabled: false
+  form:
+    enabled: false
+  event registry:
+    enabled: false
+ip:
+  #数据库 IP
+  database: 192.168.1.18
+  #系统 IP
+  app: 192.168.1.18
+spring:
+  # 多数据源配置
+  datasource:
+    primary: demo #设置默认的数据源或者数据源组,默认值即为master
+    dataSourcePropertyMap:
+      demo:
+        url: jdbc:mysql://${ip.database}:3306/demo?useUnicode=true&characterEncoding=UTF-8&autoReconnect=true&serverTimezone=Asia/Shanghai&nullCatalogMeansCurrent=true
+        driver-class-name: com.mysql.cj.jdbc.Driver
+        username: demo_user
+        password: cF6{bG2@mZ
+  session:
+    # 推荐使用REDIS，如下以内存为例搭配caffeine
+    # 选择REDIS的话需要在业务模块引入redis模块，同时需要配置redisson
+    # 选择NONE的话需要在业务模块引入caffeine模块，session在应用重启后会消失，不推荐使用，仅测试使用
+    store-type: NONE
+    timeout: 2H
+    redis:
+      namespace: spring:session
+logging:
+  # 选择对应日志配置
+  config: classpath:logging-prod.xml
+file:
+  # 文件存储类型，可选值：local、minio，推荐使用minio
+  # 选择minio时，需要配置minio信息，其中file.path为桶名称
+  # 选择local时，需要配置file.path路径，例如（window下F:\home）或 （linux下/home/file）
+  type: local
+  path: F:\home
+  # 是否需要申请授权才能看到文件，如果开启，则需要自行实现三个类
+  # FileReadInterceptor 核心拦截类
+  # FileApplyInterceptor 申请审批拦截类（如提醒审批人）
+  # FileAuthInterceptor 授权结果拦截类（如提醒申请人）
+  auth: false
+
