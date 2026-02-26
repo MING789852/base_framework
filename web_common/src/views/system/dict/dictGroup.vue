@@ -8,7 +8,6 @@ import dictGroupApi from "@/api/dictGroupApi";
 import dict from '@/views/system/dict/dict.vue'
 import DialogOver from "@/components/DialogOver/dialogOver.vue";
 import TableFnClass from "@/class/TableFnClass";
-import UploadFileClass from "@/class/UploadFileClass";
 import ColumnTypeEnum from "@/enums/ColumnTypeEnum";
 import QueryTypeEnum from "@/enums/QueryTypeEnum";
 import QueryConditionEnum from "@/enums/QueryConditionEnum";
@@ -19,7 +18,6 @@ defineOptions({
 
 let commonTableRef = ref(null)
 const tableFn = new TableFnClass()
-const uploadFile = new UploadFileClass([],new Map() as UploadMap,'deletFileIdList','uploadFileKeyList')
 const columns = ref<Array<ColumnDefine>>([
   {prop: "groupKey", label: "字典组KEY", type: ColumnTypeEnum.EDIT_INPUT, query: true, queryType: QueryTypeEnum.INPUT, queryCondition: QueryConditionEnum.LIKE},
   {prop: "groupName", label: "字典组名称", type: ColumnTypeEnum.EDIT_INPUT, query: true, queryType: QueryTypeEnum.INPUT, queryCondition: QueryConditionEnum.LIKE}
@@ -91,24 +89,22 @@ const importExcel = () => {
 </script>
 
 <template>
-  <div class="parent">
-    <commonTable ref="commonTableRef"  :columns="columns" :queryColumns="queryColumns"
-                 :dictList="dictList" :api="dictGroupApi" :tableFn="tableFn" :uploadFile="uploadFile" :table-button="tableButton">
-      <template #column>
-        <el-table-column label="详情"   header-align="center" align="center">
-          <template #default="scope">
-            <el-button v-if="isNullOrUnDef(scope.row.add)" size="small" @click="itemOpen(scope.row)">明细</el-button>
-          </template>
-        </el-table-column>
-      </template>
+  <commonTable ref="commonTableRef"  :columns="columns" :queryColumns="queryColumns"
+               :dictList="dictList" :api="dictGroupApi" :tableFn="tableFn"  :table-button="tableButton">
+    <template #column>
+      <el-table-column label="详情"   header-align="center" align="center">
+        <template #default="scope">
+          <el-button v-if="isNullOrUnDef(scope.row.add)" size="small" @click="itemOpen(scope.row)">明细</el-button>
+        </template>
+      </el-table-column>
+    </template>
 
-      <template #dialog>
-        <dialog-over :open-or-close-flag="itemFlag">
-          <dict v-if="itemFlag"  :judgeComponent="true" :hasParentDict="false"  :parentDictGroupProp="parentRow"  @componentBack="itemClose"/>
-        </dialog-over>
-      </template>
-    </commonTable>
-  </div>
+    <template #dialog>
+      <dialog-over :open-or-close-flag="itemFlag">
+        <dict v-if="itemFlag"  :judgeComponent="true" :hasParentDict="false"  :parentDictGroupProp="parentRow"  @componentBack="itemClose"/>
+      </dialog-over>
+    </template>
+  </commonTable>
 </template>
 
 <style scoped lang="scss">

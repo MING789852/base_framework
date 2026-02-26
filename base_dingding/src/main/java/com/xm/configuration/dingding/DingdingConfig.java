@@ -10,5 +10,7 @@ import java.util.Map;
 @ConfigurationProperties(prefix = "dingding")
 @Data
 public class DingdingConfig {
+    private String resultPath;
+    private String authPath;
     private Map<String,DingdingProperty> dingdingPropertyMap;
 }

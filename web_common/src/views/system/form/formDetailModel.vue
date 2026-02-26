@@ -67,14 +67,20 @@ const saveOrUpdate = (data) => {
     {label: "是否展示", prop: "judgeShow", type: QueryTypeEnum.OPTION}
   ]
   let defaultData = ref(data)
-  common.openInputDialog(columns,dictMapping,defaultData,(result)=>{
-    let data = {...result.data,...{formMainModelId:props.parentRow.id}}
-    common.handleRequestApi(formDetailModelApi.saveOrUpdateData([data])).then(res=>{
-      message(res.msg,{type:'success'})
-      commonTableRef.value.getData()
-      result.done()
-    })
-  })
+  let params:OpenInputDialogDefine = {
+    columns: columns,
+    dictMapping: dictMapping,
+    defaultValue: defaultData,
+    callBack: (result) => {
+      let data = {...result.data,...{formMainModelId:props.parentRow.id}}
+      common.handleRequestApi(formDetailModelApi.saveOrUpdateData([data])).then(res=>{
+        message(res.msg,{type:'success'})
+        commonTableRef.value.getData()
+        result.done()
+      })
+    }
+  }
+  common.openInputDialog(params)
 }
 tableFn.addFn = () => {
   saveOrUpdate({
@@ -88,31 +94,40 @@ tableFn.rowDblclick=(row: any, column: any, event: Event)=>{
   saveOrUpdate(row)
 }
 tableFn.buttonAction = {
-  config:(row:any)=>{
-    if (common.isStrBlank(row.id)){
-      return message('请保存数据后操作',{type:'error'})
-    }
-    if (![DyFormColumnTypeEnum.TREE_SELECT,DyFormColumnTypeEnum.COMMON_SELECT].includes(row.fieldType)){
-      return message('仅树状选择和普通选择可配置',{type:'error'})
-    }
-    let columns: Array<DetailColumnDefine> = [
-      {label: "字典类型", prop: "other1", type: QueryTypeEnum.OPTION},
-      {label: "字典组编码", prop: "other2",placeholder:'字典类型非部门必填', type: QueryTypeEnum.OPTION}
-    ]
-    let defaultData = ref({
-      other1:row.other1,
-      other2:row.other2
-    })
-    let cloneRow = cloneDeep(row)
-    common.openInputDialog(columns,dictMapping,defaultData,(result)=>{
-      row.other1 = result.data.other1
-      row.other2 = result.data.other2
-      common.handleRequestApi(formDetailModelApi.saveOrUpdateData([row])).then(res=>{
-        message(res.msg,{type:'success'})
-        commonTableRef.value.getData()
-        result.done()
+  actionFn(row: any, propName: string, index: number): void {
+    if (propName==='config'){
+      if (common.isStrBlank(row.id)){
+        message('请保存数据后操作',{type:'error'})
+        return
+      }
+      if (![DyFormColumnTypeEnum.TREE_SELECT,DyFormColumnTypeEnum.COMMON_SELECT].includes(row.fieldType)){
+        message('仅树状选择和普通选择可配置',{type:'error'})
+        return
+      }
+      let columns: Array<DetailColumnDefine> = [
+        {label: "字典类型", prop: "other1", type: QueryTypeEnum.OPTION},
+        {label: "字典组编码", prop: "other2",placeholder:'字典类型非部门必填', type: QueryTypeEnum.OPTION}
+      ]
+      let defaultData = ref({
+        other1:row.other1,
+        other2:row.other2
       })
-    })
+      let params:OpenInputDialogDefine = {
+        columns: columns,
+        dictMapping: dictMapping,
+        defaultValue: defaultData,
+        callBack: (result) => {
+          row.other1 = result.data.other1
+          row.other2 = result.data.other2
+          common.handleRequestApi(formDetailModelApi.saveOrUpdateData([row])).then(res=>{
+            message(res.msg,{type:'success'})
+            commonTableRef.value.getData()
+            result.done()
+          })
+        }
+      }
+      common.openInputDialog(params)
+    }
   }
 }
 </script>

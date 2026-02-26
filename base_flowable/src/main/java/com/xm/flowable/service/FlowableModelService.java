@@ -1,6 +1,7 @@
 package com.xm.flowable.service;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.xm.flowable.domain.dto.ChangeModel;
 import com.xm.module.core.params.QueryData;
 import com.xm.module.core.service.BaseService;
 import com.xm.flowable.domain.entity.TcFlowableModel;
@@ -19,6 +20,12 @@ public interface FlowableModelService extends BaseService<TcFlowableModelMapper,
     void recordModel(String processDefinitionKey, String processDefinitionName);
 
     String saveModel(FlowableModelVo flowableModelVo);
+
+    String changeModelNode(ChangeModel changeModel);
+
+    String changeModelEdge(ChangeModel changeModel);
+
+    String reSendApproveMsg(List<ProcessInstanceVo> processInstanceVoList);
 
     FlowableModelVo fillModel(TcFlowableModel flowableModel);
 

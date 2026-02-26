@@ -21,6 +21,8 @@ public class QueryData<T>{
 
     private Map<String,Object> queryParams=new HashMap<>();
 
+    //value为排序类型(descending、ascending)
+    //key为排序字段
     private Map<String,Object> orderByParams=new HashMap<>();
 
     private QueryWrapper<T> wrapper=new QueryWrapper<>();
@@ -57,6 +59,14 @@ public class QueryData<T>{
             if (value instanceof String) {
                 if (StrUtil.isNotBlank(value.toString())) {
                     wrapper.like(property, value);
+                }
+            }
+        }
+        if (QueryConditionEnum.NOT_IN.getValue().equals(condition)){
+            if (value instanceof List<?>) {
+                List<?> list = (List<?>) value;
+                if (CollectionUtil.isNotEmpty(list)) {
+                    wrapper.notIn(property, list);
                 }
             }
         }
@@ -99,6 +109,129 @@ public class QueryData<T>{
                             wrapper.le(property,end);
                         }
                     }
+                }
+            }
+        }
+        if (QueryConditionEnum.BETWEEN_DATE_STR.getValue().equals(condition)){
+            if (value instanceof List<?>) {
+                List<?> list = (List<?>) value;
+                if (CollectionUtil.isNotEmpty(list)) {
+                    if (list.size() != 2) {
+                        throw new CommonException("between条件错误");
+                    }
+                    Object start = list.get(0);
+                    Object end = list.get(1);
+                    if (start!=null){
+                        if (start instanceof Date){
+                            Date startDate= (Date) start;
+                            start=DateUtil.format(startDate,"yyyy-MM-dd");
+                        }
+                        if (start instanceof String){
+                            try {
+                                Date startDate=DateUtil.parse(start.toString(),"yyyy-MM-dd");
+                                start=DateUtil.format(startDate,"yyyy-MM-dd");
+                            }catch (Exception e){
+                                log.error("start转换日期字符串错误",e);
+                            }
+                        }
+                    }
+                    if (end!=null){
+                        if (end instanceof Date){
+                            Date endDate= (Date) end;
+                            end=DateUtil.format(endDate,"yyyy-MM");
+                        }
+                        if (end instanceof String){
+                            try {
+                                Date endDate=DateUtil.parse(end.toString(),"yyyy-MM-dd");
+                                end=DateUtil.format(endDate,"yyyy-MM-dd");
+                            }catch (Exception e){
+                                log.error("end转换日期字符串错误",e);
+                            }
+                        }
+                    }
+                    wrapper.between(property, start, end);
+                }
+            }
+        }
+        if (QueryConditionEnum.BETWEEN_MONTH_STR.getValue().equals(condition)){
+            if (value instanceof List<?>) {
+                List<?> list = (List<?>) value;
+                if (CollectionUtil.isNotEmpty(list)) {
+                    if (list.size() != 2) {
+                        throw new CommonException("between条件错误");
+                    }
+                    Object start = list.get(0);
+                    Object end = list.get(1);
+                    if (start!=null){
+                        if (start instanceof Date){
+                            Date startDate= (Date) start;
+                            start=DateUtil.format(startDate,"yyyy-MM");
+                        }
+                        if (start instanceof String){
+                            try {
+                                Date startDate=DateUtil.parse(start.toString(),"yyyy-MM-dd");
+                                start=DateUtil.format(startDate,"yyyy-MM");
+                            }catch (Exception e){
+                                log.error("start转换月份字符串错误",e);
+                            }
+                        }
+                    }
+                    if (end!=null){
+                        if (end instanceof Date){
+                            Date endDate= (Date) end;
+                            end=DateUtil.format(endDate,"yyyy-MM");
+                        }
+                        if (end instanceof String){
+                            try {
+                                Date endDate=DateUtil.parse(end.toString(),"yyyy-MM-dd");
+                                end=DateUtil.format(endDate,"yyyy-MM");
+                            }catch (Exception e){
+                                log.error("end转换月份字符串错误",e);
+                            }
+                        }
+                    }
+                    wrapper.between(property, start, end);
+                }
+            }
+        }
+        if (QueryConditionEnum.BETWEEN_MONTH.getValue().equals(condition)){
+            if (value instanceof List<?>) {
+                List<?> list = (List<?>) value;
+                if (CollectionUtil.isNotEmpty(list)) {
+                    if (list.size() != 2) {
+                        throw new CommonException("between条件错误");
+                    }
+                    Object start = list.get(0);
+                    Object end = list.get(1);
+                    if (start!=null){
+                        if (start instanceof Date){
+                            Date startDate= (Date) start;
+                            start=DateUtil.beginOfMonth(startDate);
+                        }
+                        if (start instanceof String){
+                            try {
+                                Date startDate=DateUtil.parse(start.toString(),"yyyy-MM-dd");
+                                start=DateUtil.beginOfMonth(startDate);
+                            }catch (Exception e){
+                                log.error("start转换月份错误",e);
+                            }
+                        }
+                    }
+                    if (end!=null){
+                        if (end instanceof Date){
+                            Date endDate= (Date) end;
+                            end=DateUtil.endOfMonth(endDate);
+                        }
+                        if (end instanceof String){
+                            try {
+                                Date endDate=DateUtil.parse(end.toString(),"yyyy-MM-dd");
+                                end=DateUtil.endOfMonth(endDate);
+                            }catch (Exception e){
+                                log.error("end转换月份错误",e);
+                            }
+                        }
+                    }
+                    wrapper.between(property, start, end);
                 }
             }
         }

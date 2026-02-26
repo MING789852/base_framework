@@ -8,5 +8,9 @@ public enum ProcessVariableNameEnum {
     businessType,
     businessKey,
     title,
-    jumpUrl;
+    rollBackRecordMsg,
+    jumpUrl,
+    creator,
+    creatorId,
+    createTime
 }

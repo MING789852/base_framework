@@ -22,14 +22,51 @@ public class LocalLockService implements LockService {
     }
 
     @Override
-    public <T> T lock(String lockCode, Supplier<T> executeSupplier, Consumer<Exception> exceptionConsumer) {
-        Lock rLock = getRLock(lockCode);
+    public String getLockPrefix() {
+        return "lock:";
+    }
+
+    @Override
+    public <T> T lock(String lockCode, Supplier<T> executeSupplier) {
+        Lock rLock = getRLock(getLockPrefix()+lockCode);
         try {
             rLock.lock();
-            return executeSupplier.get();
-        }catch (Exception e){
-            exceptionConsumer.accept(e);
+            if (executeSupplier!=null){
+                return executeSupplier.get();
+            }
             return null;
+        }catch (Exception e){
+            throw new CommonException(e.getMessage());
+        }finally {
+            rLock.unlock();
+        }
+    }
+
+    @Override
+    public <T> T lock(String lockCode, Supplier<T> executeSupplier, Consumer<Exception> exceptionConsumer) {
+        try {
+            return lock(lockCode,executeSupplier);
+        }catch (Exception e){
+            if (exceptionConsumer!=null){
+                exceptionConsumer.accept(e);
+            }
+            return null;
+        }
+    }
+
+    @Override
+    public <T> T tryLock(String lockCode, String lockMsg, Supplier<T> executeSupplier) {
+        Lock rLock = getRLock(getLockPrefix()+lockCode);
+        if (!rLock.tryLock()){
+            throw new CommonException(lockMsg);
+        }
+        try {
+            if (executeSupplier!=null){
+                return executeSupplier.get();
+            }
+            return null;
+        }catch (Exception e){
+            throw new CommonException(e.getMessage());
         }finally {
             rLock.unlock();
         }
@@ -37,17 +74,13 @@ public class LocalLockService implements LockService {
 
     @Override
     public <T> T tryLock(String lockCode, String lockMsg, Supplier<T> executeSupplier, Consumer<Exception> exceptionConsumer) {
-        Lock rLock = getRLock(lockCode);
-        if (!rLock.tryLock()){
-            throw new CommonException(lockMsg);
-        }
         try {
-            return executeSupplier.get();
+            return tryLock(lockCode,lockMsg,executeSupplier);
         }catch (Exception e){
-            exceptionConsumer.accept(e);
+            if (exceptionConsumer!=null){
+                exceptionConsumer.accept(e);
+            }
             return null;
-        }finally {
-            rLock.unlock();
         }
     }
 }

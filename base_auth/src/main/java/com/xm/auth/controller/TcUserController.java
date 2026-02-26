@@ -46,7 +46,7 @@ public class TcUserController {
 
     @PostMapping("saveOrUpdateData")
     public Result<String> saveOrUpdateData(@RequestBody List<TcUser> tcUserList){
-        return Result.successForData(tcUserService.saveOrUpdateData(tcUserList));
+        return Result.successForData(tcUserService.addSystemUser(tcUserList));
     }
 
     @GetMapping("getUserIdAndNickNameMapping")
@@ -77,5 +77,15 @@ public class TcUserController {
     @GetMapping("/getUserTypeMapping")
     public Result<Map<Integer, String>> getUserTypeMapping(){
         return Result.successForData(tcUserService.getUserTypeMapping());
+    }
+
+    @PostMapping("/deleteData")
+    public Result<String> deleteData(@RequestBody List<TcUser> list){
+        return Result.successForData(tcUserService.deleteData(list));
+    }
+
+    @PostMapping("/resetLoginTry")
+    public Result<String> resetLoginTry(@RequestBody List<TcUser> list){
+        return Result.successForData(tcUserService.resetLoginTry(list));
     }
 }

@@ -1,3 +1,5 @@
+import {ElMessage} from "element-plus";
+
 declare module "vue" {
   /**
    * 自定义全局组件获得 Volar 提示（自定义的全局组件需要在这里声明下才能获得 Volar 类型提示哦）
@@ -23,6 +25,7 @@ declare module "vue" {
     ElAvatar: (typeof import("element-plus"))["ElAvatar"];
     ElBacktop: (typeof import("element-plus"))["ElBacktop"];
     ElBadge: (typeof import("element-plus"))["ElBadge"];
+    ElAutoResizer: (typeof import("element-plus"))["ElAutoResizer"];
     ElBreadcrumb: (typeof import("element-plus"))["ElBreadcrumb"];
     ElBreadcrumbItem: (typeof import("element-plus"))["ElBreadcrumbItem"];
     ElButton: (typeof import("element-plus"))["ElButton"];
@@ -113,6 +116,7 @@ declare module "vue" {
     ElWatermark: (typeof import("element-plus"))["ElWatermark"];
     ElTour: (typeof import("element-plus"))["ElTour"];
     ElTourStep: (typeof import("element-plus"))["ElTourStep"];
+    ElMessage: (typeof import("element-plus"))["ElMessage"];
   }
 
   interface ComponentCustomProperties {

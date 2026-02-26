@@ -1,13 +1,16 @@
 package com.xm.msg.service.impl;
 
+import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.xm.core.enums.MsgActionTypeEnum;
 import com.xm.core.msg.consts.MsgTypeConst;
 import com.xm.core.msg.consts.MsgTypeItem;
+import com.xm.core.msg.params.JumpUrlParam;
 import com.xm.core.msg.params.Msg;
 import com.xm.module.core.params.QueryData;
-import com.xm.module.core.service.BaseService;
+import com.xm.msg.domain.dto.MsgDto;
 import com.xm.msg.domain.entity.TcMsg;
 import com.xm.msg.mapper.TcMsgMapper;
 import com.xm.msg.service.MsgMainModelService;
@@ -17,6 +20,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -58,13 +62,38 @@ public class MsgMainModelServiceImpl implements MsgMainModelService {
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public String saveOrUpdateMsg(List<Msg> list) {
+    public String saveOrUpdateMsg(List<MsgDto> list) {
         if (CollectionUtil.isNotEmpty(list)){
             //清空额外消息
-            for (Msg msg : list){
+            List<Msg> msgList=new ArrayList<>();
+            for (MsgDto msgDto : list){
+                Msg msg= BeanUtil.copyProperties(msgDto,Msg.class);
                 msg.setInfo("");
+                String jumpUrl = msgDto.getJumpUrl();
+                if (StrUtil.isNotBlank(jumpUrl)){
+                    JumpUrlParam jumpUrlParam=new JumpUrlParam();
+                    jumpUrlParam.setMsgActionTypeEnum(MsgActionTypeEnum.outDirectLink);
+                    jumpUrlParam.setOutDirectLink(jumpUrl);
+                    msg.setJumpUrlParam(jumpUrlParam);
+                }
+                msgList.add(msg);
             }
-            MsgUtil.createOrUpdateMsg(list);
+            MsgUtil.createOrUpdateMsg(msgList);
+        }
+        return "操作成功";
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public String finishMsg(List<Msg> list) {
+        if (CollectionUtil.isNotEmpty(list)){
+            for (Msg msg : list){
+                TcMsg tcMsg = tcMsgMapper.selectById(msg.getId());
+                if (tcMsg==null){
+                    continue;
+                }
+                MsgUtil.finishMsgByMsgType(tcMsg.getType(),tcMsg.getBusinessType(),tcMsg.getBusinessKey(),tcMsg.getUserId());
+            }
         }
         return "操作成功";
     }

@@ -1,7 +1,6 @@
 package com.xm.msg;
 
 import cn.hutool.core.collection.CollectionUtil;
-import cn.hutool.core.io.IoUtil;
 import cn.hutool.core.lang.Validator;
 import cn.hutool.core.util.ArrayUtil;
 import cn.hutool.core.util.StrUtil;
@@ -11,7 +10,9 @@ import com.xm.configuration.mail.MailProperty;
 import com.xm.core.msg.MsgSaveService;
 import com.xm.core.msg.MsgService;
 import com.xm.core.msg.consts.MsgTypeConst;
+import com.xm.core.msg.params.ErrorSendResult;
 import com.xm.core.msg.params.Msg;
+import com.xm.core.msg.params.MsgSendResult;
 import com.xm.msg.params.EmailInfo;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -25,7 +26,6 @@ import org.springframework.util.CollectionUtils;
 
 import javax.mail.MessagingException;
 import javax.mail.internet.MimeMessage;
-import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -47,8 +47,13 @@ public class EmailMsgService implements MsgService {
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public boolean createOrUpdateMsg(List<Msg> msgList) {
+    public MsgSendResult createOrUpdateMsg(List<Msg> msgList) {
+        MsgSendResult result = new MsgSendResult();
+        if (CollectionUtil.isEmpty(msgList)){
+            return result;
+        }
         List<MimeMessage> mimeMessages = new ArrayList<>();
+        List<Msg> unknownResultMsgList = new ArrayList<>();
         for (Msg msg:msgList){
             if (StrUtil.isBlank(msg.getBusinessType())){
                 throw new CommonException("【邮件消息】业务类型为空，无法创建或更新邮件消息");
@@ -96,7 +101,7 @@ public class EmailMsgService implements MsgService {
             }
 
             if (CollectionUtil.isEmpty(toList)){
-                log.error("【邮件消息】转换之后，邮件接收人为空，无法创建或更新邮件消息");
+                result.addFailSendMsg(msg,new ErrorSendResult(null,"转换之后，邮件接收人为空，无法创建或更新邮件消息",null));
                 continue;
             }
 
@@ -113,9 +118,25 @@ public class EmailMsgService implements MsgService {
             msg.setType(getMsgType());
             msg.setInfo(JSONUtil.toJsonStr(emailInfo));
             msgSaveService.saveMsg(msg);
+
+            unknownResultMsgList.add(msg);
         }
-        sendMailAll(mimeMessages);
-        return true;
+        if (CollectionUtils.isEmpty(mimeMessages)){
+            return result;
+        }
+        try {
+            MimeMessage[] msg=new MimeMessage[mimeMessages.size()];
+            mimeMessages.toArray(msg);
+            javaMailSender.send(msg);
+            //存储发送结果
+            result.addSuccessSendMsgList(unknownResultMsgList);
+        }catch (Exception e){
+            log.error("[JavaMailSender邮件发送错误]错误原因",e);
+            //存储发送结果
+            String errorReason=StrUtil.format("[JavaMailSender邮件发送错误]错误原因->{}",e.getMessage());
+            result.addFailSendMsgList(unknownResultMsgList,new ErrorSendResult(null,errorReason,e));
+        }
+        return result;
     }
 
     @Override
@@ -148,22 +169,6 @@ public class EmailMsgService implements MsgService {
     }
 
 
-    /**
-     * 发送邮件
-     */
-    private void sendMailAll(List<MimeMessage> mimeMessages){
-        if (CollectionUtils.isEmpty(mimeMessages)){
-            return;
-        }
-        MimeMessage[] msg=new MimeMessage[mimeMessages.size()];
-        mimeMessages.toArray(msg);
-        try {
-            javaMailSender.send(msg);
-        }catch (Exception e){
-            log.error("[JavaMailSender邮件发送错误]错误原因",e);
-        }
-    }
-
 
     /**
      * @param toList  发送人
@@ -173,7 +178,7 @@ public class EmailMsgService implements MsgService {
      * @param fileMap 附件
      * @return  MimeMessage
      */
-    private  MimeMessage generateMimeMessageWithFile(List<String> toList, List<String> ccList, String tittle, String content, Map<String, InputStream> fileMap){
+    private  MimeMessage generateMimeMessageWithFile(List<String> toList, List<String> ccList, String tittle, String content, Map<String, byte[]> fileMap){
         if (CollectionUtils.isEmpty(toList)){
             log.error("邮件接收人为空");
             return null;
@@ -201,9 +206,9 @@ public class EmailMsgService implements MsgService {
         try {
             //设置附件
             if (fileMap!=null&&!fileMap.isEmpty()){
-                for (Map.Entry<String,InputStream> entry:fileMap.entrySet()){
+                for (Map.Entry<String,byte[]> entry:fileMap.entrySet()){
                     try {
-                        helper.addAttachment(entry.getKey(),new ByteArrayResource(IoUtil.readBytes(entry.getValue())));
+                        helper.addAttachment(entry.getKey(),new ByteArrayResource(entry.getValue()));
                     } catch (Exception e) {
                         log.error("添加附件失败",e);
                         throw new CommonException("添加附件失败");

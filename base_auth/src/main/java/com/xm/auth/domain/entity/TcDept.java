@@ -1,5 +1,6 @@
 package com.xm.auth.domain.entity;
 
+import java.io.Serializable;
 import java.util.Date;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
@@ -8,7 +9,7 @@ import javax.validation.constraints.Size;
 /**
  * 部门表
  */
-public class TcDept {
+public class TcDept implements Serializable {
     /**
      * 部门id
      */

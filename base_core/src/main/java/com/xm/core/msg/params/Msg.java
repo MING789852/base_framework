@@ -49,9 +49,29 @@ public class Msg {
 
 
     /**
+     * 群组id
+     */
+    private String groupId;
+
+    /**
+     * "1" 为@所有人
+     * "0" 为@指定人员
+     * 带url类型的消息也无法生效
+     * 为空则不生效
+     * 群组@所有人
+     */
+    private Boolean groupAtAll;
+
+
+    /**
      * 是否完成
      */
-    private Boolean judgeFinish;
+    private boolean judgeFinish;
+
+    /**
+     * 跳转完成后消息是否结束
+     */
+    private Boolean jumpAfterFinish;
 
     /**
      * 跳转url
@@ -59,9 +79,20 @@ public class Msg {
     private JumpUrlParam jumpUrlParam;
 
     /**
+     * 按钮参数
+     */
+    private List<ButtonParam> buttonParamList;
+
+    /**
      * 接收人员
      */
     private List<String> toUserIdList;
+
+
+    /**
+     * 创建人员ID
+     */
+    private String creatorId;
 
     /**
      * 抄送人员
@@ -71,7 +102,16 @@ public class Msg {
     /**
      * 消息携带文件
      */
-    private Map<String, InputStream> fileMap;
+    private Map<String, byte[]> fileMap;
+
+    /**
+     * 其他信息
+     */
+    private Map<String, Object> otherMap;
 
 
+    /**
+     * 消息发送异常原因
+     */
+    private ErrorSendResult errorSendResult;
 }

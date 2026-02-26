@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.xm.core.msg.params.Msg;
 import com.xm.core.params.Result;
 import com.xm.module.core.params.QueryData;
+import com.xm.msg.domain.dto.MsgDto;
 import com.xm.msg.domain.entity.TcMsg;
 import com.xm.msg.service.MsgMainModelService;
 import lombok.RequiredArgsConstructor;
@@ -24,8 +25,13 @@ public class MsgMainModelController {
     }
 
     @PostMapping("saveOrUpdateMsg")
-    public Result<String> saveOrUpdateMsg(@RequestBody List<Msg> list) {
+    public Result<String> saveOrUpdateMsg(@RequestBody List<MsgDto> list) {
         return Result.successForData(msgMainModelService.saveOrUpdateMsg(list));
+    }
+
+    @PostMapping("finishMsg")
+    public Result<String> finishMsg(@RequestBody List<Msg> list) {
+        return Result.successForData(msgMainModelService.finishMsg(list));
     }
 
 

@@ -33,6 +33,18 @@ public class RedisCacheService implements CacheService {
 
     @Override
     public Set<String> keys(String pattern) {
+        //非阻塞式扫描
+//        return RedisTemplateUtil.getRedisTemplate().execute((RedisCallback<Set<String>>) connection -> {
+//            Set<String> keys = new HashSet<>();
+//            Cursor<byte[]> cursor = connection.scan(
+//                    ScanOptions.scanOptions().match(pattern).count(1000).build());
+//            while (cursor.hasNext()) {
+//                keys.add(new String(cursor.next()));
+//            }
+//            cursor.close();
+//            return keys;
+//        });
+        //阻塞式获取
         return Objects.requireNonNull(RedisTemplateUtil.getRedisTemplate().keys(pattern)).stream().map(Object::toString).collect(Collectors.toSet());
     }
 

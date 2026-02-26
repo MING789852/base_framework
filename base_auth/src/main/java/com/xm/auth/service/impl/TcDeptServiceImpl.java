@@ -6,10 +6,7 @@ import com.baomidou.dynamic.datasource.annotation.DSTransactional;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.xm.advice.exception.exception.CommonException;
-import com.xm.auth.domain.entity.TcRole;
-import com.xm.auth.domain.entity.TcUser;
-import com.xm.auth.domain.entity.TcUserDeptRel;
-import com.xm.auth.domain.entity.TcUserRoleRel;
+import com.xm.auth.domain.entity.*;
 import com.xm.auth.domain.vo.TcDeptVo;
 import com.xm.auth.domain.vo.UserAndDeptVo;
 import com.xm.auth.mapper.TcDeptMapper;
@@ -48,8 +45,8 @@ public class TcDeptServiceImpl implements TcDeptService {
     }
 
     @Override
-    public List<TcDeptVo> selectByList(QueryData queryData) {
-        QueryWrapper queryWrapper = queryData.generateQueryWrapper();
+    public List<TcDeptVo> selectByList(QueryData<TcDeptVo> queryData) {
+        QueryWrapper<TcDeptVo> queryWrapper = queryData.generateQueryWrapper();
         queryWrapper.eq("level",1);
         TcDeptService beanByClass = SpringBeanUtil.getBeanByClass(TcDeptService.class);
         List<TcDeptVo> tcDeptVoList = beanByClass.selectAllByList(queryData);
@@ -70,11 +67,10 @@ public class TcDeptServiceImpl implements TcDeptService {
     }
 
     @Override
-    public List<TcDeptVo> selectAllByList(QueryData queryData) {
-        QueryWrapper queryWrapper = queryData.getWrapper();
+    public List<TcDeptVo> selectAllByList(QueryData<TcDeptVo> queryData) {
+        QueryWrapper<TcDeptVo> queryWrapper = queryData.getWrapper();
         queryWrapper.eq("judge_enable",1);
-        List<TcDeptVo> tcDeptVoList=tcDeptMapper.selectByList(queryWrapper);
-        return tcDeptVoList;
+        return tcDeptMapper.selectByList(queryWrapper);
     }
 
     @Override
@@ -82,7 +78,7 @@ public class TcDeptServiceImpl implements TcDeptService {
         if (StrUtil.isBlank(id)){
             throw new CommonException("部门id不能为空");
         }
-        QueryWrapper queryWrapper=new QueryWrapper<>();
+        QueryWrapper<TcDeptVo> queryWrapper=new QueryWrapper<>();
         queryWrapper.eq("id",id);
         List<TcDeptVo> tcDeptVoList=tcDeptMapper.selectByList(queryWrapper);
         if (CollectionUtil.isNotEmpty(tcDeptVoList)){
@@ -101,7 +97,7 @@ public class TcDeptServiceImpl implements TcDeptService {
     }
 
     private List<TcDeptVo> recursionFindChildren(TcDeptVo parent){
-        QueryWrapper queryWrapper=new QueryWrapper<>();
+        QueryWrapper<TcDeptVo> queryWrapper=new QueryWrapper<>();
         queryWrapper.eq("parent_id",parent.getId());
         List<TcDeptVo> tcDeptVoList=tcDeptMapper.selectByList(queryWrapper);
         if (CollectionUtil.isNotEmpty(tcDeptVoList)){
@@ -120,11 +116,11 @@ public class TcDeptServiceImpl implements TcDeptService {
 
     @Override
     public List<TcDeptVo> findChildrenList(TcDeptVo parent){
-        QueryWrapper queryWrapper=new QueryWrapper<>();
+        QueryWrapper<TcDeptVo> queryWrapper=new QueryWrapper<>();
         queryWrapper.eq("parent_id",parent.getId());
         List<TcDeptVo> tcDeptVoList=tcDeptMapper.selectByList(queryWrapper);
         if (CollectionUtil.isNotEmpty(tcDeptVoList)){
-            tcDeptVoList.stream().forEach(item->{
+            tcDeptVoList.forEach(item->{
                 item.setIsLeaf(false);
                 item.setChildren(new ArrayList<>());
             });
@@ -134,7 +130,7 @@ public class TcDeptServiceImpl implements TcDeptService {
 
     @Override
     public List<UserAndDeptVo> findUserAndDeptRefByDeptId(String deptId) {
-        QueryWrapper queryWrapper =new QueryWrapper<>();
+        QueryWrapper<TcDeptVo> queryWrapper =new QueryWrapper<>();
         queryWrapper.eq("id",deptId);
         TcDeptService beanByClass = SpringBeanUtil.getBeanByClass(TcDeptService.class);
         TcDeptVo tcDeptVo = beanByClass.selectOne(deptId);
@@ -144,6 +140,13 @@ public class TcDeptServiceImpl implements TcDeptService {
         List<UserAndDeptVo> userAndDeptVoList=new ArrayList<>();
         recursionUserAndDeptRef(userAndDeptVoList, Collections.singletonList(tcDeptVo));
         return userAndDeptVoList;
+    }
+
+    @Override
+    public List<TcDept> selectDeptByDeptNameList(List<String> deptNameList) {
+        LambdaQueryWrapper<TcDept> deptLambdaQueryWrapper=new LambdaQueryWrapper<>();
+        deptLambdaQueryWrapper.in(TcDept::getName,deptNameList);
+        return tcDeptMapper.selectList(deptLambdaQueryWrapper);
     }
 
     private void recursionUserAndDeptRef(List<UserAndDeptVo> userAndDeptVoList,List<TcDeptVo> deptVoList){
@@ -183,9 +186,9 @@ public class TcDeptServiceImpl implements TcDeptService {
 
     @Override
     @DSTransactional(rollbackFor = Exception.class)
-    public List<TcUser> createTcUserWithDeptId(String deptId) {
+    public List<TcUser> createTcUserWithDeptId(List<String> deptIdList) {
         ExternalDeptService externalDeptService=SpringBeanUtil.getBeanByClass(ExternalDeptService.class);
-        return externalDeptService.createTcUserWithDeptId(deptId);
+        return externalDeptService.createTcUserWithDeptId(deptIdList);
     }
 
     @Override

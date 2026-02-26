@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import flowableApi from "@/api/flowableApi";
-import {ref} from "vue";
+import {ref, useTemplateRef} from "vue";
 import ColumnTypeEnum from "@/enums/ColumnTypeEnum";
 import QueryTypeEnum from "@/enums/QueryTypeEnum";
 import QueryConditionEnum from "@/enums/QueryConditionEnum";
@@ -9,7 +9,8 @@ import TableFnClass from "@/class/TableFnClass";
 import FlowableModelDetail from "@/views/system/flowable/flowableModelDetail.vue";
 import common from "@/utils/common";
 import {message} from "@/utils/message";
-import FlowableDetail from "@/components/flowable/flowableDetail.vue";
+import FlowableInsAction from "@/components/flowable/flowableInsAction.vue";
+import FlowableVariableAction from "@/components/flowable/flowableVariableAction.vue";
 
 defineOptions({
   name: 'flowable-model'
@@ -20,7 +21,6 @@ const columns = ref<Array<ColumnDefine>>([
   {prop: "createUser", label: "创建人员", type: ColumnTypeEnum.COMMON},
   {prop: "createDate", label: "创建日期", type: ColumnTypeEnum.COMMON},
 ]);
-const dictList= ref({})
 const queryColumns = ref<Array<ColumnDefine>>([
   {prop: "processDefinitionKey_$_like", label: "流程定义KEY", queryType: QueryTypeEnum.INPUT, queryCondition: QueryConditionEnum.LIKE},
   {prop: "processDefinitionName_$_like", label: "流程定义名称", queryType: QueryTypeEnum.INPUT, queryCondition: QueryConditionEnum.LIKE}
@@ -38,7 +38,7 @@ const tableButton = ref<CommonTableButton>({
 let commonTableRef = ref(null)
 const detailFlag = ref(false)
 const detailData = ref({})
-const actionType = ref('')
+const actionType = ref<'add'|'view'>('add')
 tableFn.addFn = () => {
   detailData.value = {}
   actionType.value = 'add'
@@ -72,6 +72,36 @@ const forceDelete = () => {
       commonTableRef.value.getData()
     })
   })
+}
+
+
+interface ProcInsTestProp {
+  processDefinitionKey?:string,
+  businessKey?:string,
+  listenerClassName?:string,
+  variableDataList?: VariableDataProp[]
+}
+
+let confirmTestPropFn = ()=>{}
+const procInsTestPropFlag = ref(false)
+const procInsTestPropData = ref<ProcInsTestProp>({})
+const  procInsTestFlag = ref(false)
+const  procInsTestData = ref<any>({})
+const createTestProcess = (row) => {
+  procInsTestPropData.value = {
+    processDefinitionKey: row.processDefinitionKey,
+    businessKey: 'test',
+    variableDataList: [],
+    listenerClassName: ''
+  }
+  confirmTestPropFn = () => {
+    common.handleRequestApi(flowableApi.createTestProcess(procInsTestPropData.value)).then(res=>{
+      procInsTestFlag.value = true
+      procInsTestData.value.id = res.data
+      procInsTestPropFlag.value=false
+    })
+  }
+  procInsTestPropFlag.value= true
 }
 
 const openProcIns = (row) => {
@@ -111,7 +141,7 @@ const procInsTableButton = ref<CommonTableButton>({
   initQueryFn: true,
   exportExcelFn: false
 })
-let procInsTableRef = ref(null)
+let procInsTableRef = useTemplateRef<InstanceType<typeof CommonTable>>('procInsTableRef')
 procInsTableFn.initFn = () => {}
 procInsTableFn.deleteFn = () => {
   let list:any[]=procInsTableRef.value.selectTableData
@@ -119,7 +149,7 @@ procInsTableFn.deleteFn = () => {
     return message('请选中数据后操作',{type:'error'})
   }
   common.showMsgDialog('是否执行删除操作').then(()=>{
-    common.handleRequestApi(flowableApi.deleteProcessInstance(list)).then(res=>{
+    common.handleRequestApi(flowableApi.deleteProcessInstance(list)).then(()=>{
       procInsTableRef.value.getData()
     })
   })
@@ -145,6 +175,16 @@ const checkProcIns = (his:boolean) => {
   procInsHis.value = his
   procInsTableRef.value.getData()
 }
+const reSendApproveMsg = () => {
+  let selectTableData =  procInsTableRef.value.selectTableData
+  if (selectTableData.length === 0) {
+    return message('请选中数据后操作', {type: 'error'})
+  }
+  common.handleRequestApi(flowableApi.reSendApproveMsg(selectTableData)).then(()=>{
+    message('操作成功', {type: 'success'})
+  })
+}
+
 </script>
 
 <template>
@@ -160,10 +200,37 @@ const checkProcIns = (his:boolean) => {
         <el-table-column header-align="center" align="center" label="操作" >
           <template #default="scope">
             <el-button   size="small" @click="openProcIns(scope.row)">查看关联流程实例</el-button>
+            <el-button   size="small" @click="createTestProcess(scope.row)">测试流程</el-button>
           </template>
         </el-table-column>
       </template>
       <template #dialog>
+        <el-dialog v-model="procInsTestPropFlag" width="50%" title="测试流程参数输入">
+          <el-form ref="test" label-position="right" label-width="auto">
+            <el-form-item label="processDefinitionKey">
+              {{procInsTestPropData.processDefinitionKey}}
+            </el-form-item>
+            <el-form-item label="businessKey">
+              <el-input
+                  v-model="procInsTestPropData.businessKey"/>
+            </el-form-item>
+            <el-form-item label="listenerClassName">
+              <el-input
+                  v-model="procInsTestPropData.listenerClassName" placeholder="实现FlowableTaskListener类的全类名，为空默认com.xm.flowable.listener.FlowableTestTipListener"/>
+            </el-form-item>
+            <el-form-item label="variables">
+              <flowable-variable-action v-model:variable-data-list="procInsTestPropData.variableDataList"/>
+            </el-form-item>
+          </el-form>
+          <template #footer>
+            <div class="dialog-footer">
+              <el-button @click="procInsTestPropFlag = false">取消</el-button>
+              <el-button type="primary" @click="confirmTestPropFn">
+                确认
+              </el-button>
+            </div>
+          </template>
+        </el-dialog>
         <el-dialog   v-model="detailFlag" append-to-body fullscreen>
           <flowable-model-detail
               v-if="detailFlag" v-model:detailData="detailData" v-model:detailFlag="detailFlag" v-model:actionType="actionType" @finish="finishDetail"/>
@@ -172,13 +239,19 @@ const checkProcIns = (his:boolean) => {
           <common-table ref="procInsTableRef"  :columns="procInsColumns" height="75vh" :query-columns="procInsQueryColumns"
                         :api="flowableApi" :tableFn="procInsTableFn" :table-button="procInsTableButton">
             <template #button_end>
-              <el-button  type="primary" size="small" @click="checkProcIns(false)">查看正在运行</el-button>
-              <el-button  type="primary" size="small" @click="checkProcIns(true)">查看历史</el-button>
+              <div class="flex flex-row gap-2">
+                <el-button  type="primary" size="small" @click="checkProcIns(false)">查看正在运行</el-button>
+                <el-button  type="primary" size="small" @click="checkProcIns(true)">查看历史</el-button>
+                <el-button  type="primary" size="small" @click="reSendApproveMsg">重发审批提醒</el-button>
+              </div>
             </template>
           </common-table>
         </el-dialog>
         <el-dialog v-if="procInsDetailFlag"  v-model="procInsDetailFlag" append-to-body fullscreen>
-          <flowable-detail :process-id="procInsDetailData.id"/>
+          <flowable-ins-action :process-id="procInsDetailData.id"/>
+        </el-dialog>
+        <el-dialog v-if="procInsTestFlag"  v-model="procInsTestFlag" append-to-body fullscreen>
+          <flowable-ins-action :process-id="procInsTestData.id"/>
         </el-dialog>
       </template>
     </common-table>

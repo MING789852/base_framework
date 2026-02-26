@@ -9,7 +9,6 @@ import {
   __APP_INFO__
 } from "./build/utils";
 
-
 export default ({ mode }: ConfigEnv): UserConfigExport => {
   const { VITE_CDN, VITE_PORT, VITE_COMPRESSION, VITE_PUBLIC_PATH,VITE_API,VITE_API_PATH } =
     warpperEnv(loadEnv(mode, root));

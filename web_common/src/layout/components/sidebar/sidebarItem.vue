@@ -183,20 +183,42 @@ function resolvePath(routePath) {
           :is="useRenderIcon(props.item.meta && toRaw(props.item.meta.icon))"
         />
       </div>
+<!--      <ReText-->
+<!--        v-if="-->
+<!--          !(-->
+<!--            layout === 'vertical' &&-->
+<!--            isCollapse &&-->
+<!--            toRaw(props.item.meta.icon) &&-->
+<!--            props.item.parentId === null-->
+<!--          )-->
+<!--        "-->
+<!--        :tippyProps="{-->
+<!--          offset: [0, -10],-->
+<!--          theme: tooltipEffect-->
+<!--        }"-->
+<!--        :class="{-->
+<!--          '!text-inherit': true,-->
+<!--          '!px-4':-->
+<!--            layout !== 'horizontal' &&-->
+<!--            isCollapse &&-->
+<!--            !toRaw(props.item.meta.icon) &&-->
+<!--            props.item.parentId === null-->
+<!--        }"-->
+<!--      >-->
+<!--        {{ transformI18n(props.item.meta.title) }}-->
+<!--      </ReText>-->
+
       <ReText
-        v-if="
+          v-if="
           !(
-            layout === 'vertical' &&
-            isCollapse &&
-            toRaw(props.item.meta.icon) &&
-            props.item.parentId === null
+            layout === 'vertical'&&isCollapse
           )
         "
-        :tippyProps="{
+          :tippyProps="{
           offset: [0, -10],
           theme: tooltipEffect
         }"
-        :class="{
+          :class="{
           '!text-inherit': true,
           '!px-4':
             layout !== 'horizontal' &&

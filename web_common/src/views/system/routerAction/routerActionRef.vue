@@ -6,6 +6,8 @@ import common from "@/utils/common";
 import systemRouterActionApi from "@/api/systemRouterActionApi";
 import {message} from "@/utils/message";
 import systemMenuApi from "@/api/systemMenuApi";
+import CardContainer from "@/components/CardContainer/CardContainer.vue";
+import FlexFullScrollContainer from "@/components/FlexFullScrollContainer/FlexFullScrollContainer.vue";
 const defaultProps = {
   children: 'children',
   label: 'title',
@@ -73,7 +75,7 @@ const saveRef = () => {
 
 <template>
   <div class="parent">
-    <el-card shadow="never">
+    <card-container :show-footer="false">
       <template #header>
         <div style="display: flex;justify-content: space-between">
           <el-button-group>
@@ -85,20 +87,26 @@ const saveRef = () => {
           </div>
         </div>
       </template>
-      <el-tree
-          ref="treeRef"
-          :data="treeData"
-          node-key="id"
-          :default-expand-all="true"
-          :show-checkbox="true"
-          :check-strictly="true"
-          :default-checked-keys="selectKey"
-          :highlight-current="true"
-          :props="defaultProps"
-          :filter-node-method="filterNode"
-          @check="checkNode"
-      />
-    </el-card>
+      <template #default>
+        <flex-full-scroll-container>
+          <el-scrollbar height="100%">
+            <el-tree
+                ref="treeRef"
+                :data="treeData"
+                node-key="id"
+                :default-expand-all="true"
+                :show-checkbox="true"
+                :check-strictly="true"
+                :default-checked-keys="selectKey"
+                :highlight-current="true"
+                :props="defaultProps"
+                :filter-node-method="filterNode"
+                @check="checkNode"
+            />
+          </el-scrollbar>
+        </flex-full-scroll-container>
+      </template>
+    </card-container>
   </div>
 </template>
 

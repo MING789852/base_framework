@@ -12,7 +12,6 @@ import com.xm.auth.domain.entity.TcUser;
 import com.xm.auth.domain.vo.LoginUserVo;
 import com.xm.auth.domain.vo.TokenVo;
 import com.xm.auth.domain.vo.UserVo;
-import com.xm.auth.service.TcUserRoleRelService;
 import com.xm.auth.service.TcUserService;
 import com.xm.consts.AuthCacheKey;
 import com.xm.consts.SessionAttr;
@@ -25,40 +24,30 @@ import org.springframework.session.Session;
 
 import javax.servlet.http.HttpSession;
 import java.util.*;
-import java.util.stream.Collectors;
 
 @Slf4j
 public class LoginSessionUtil {
 
     private static final TcUserService userService;
 
-    private static final TcUserRoleRelService userRoleRelService;
-
     static {
-        userRoleRelService=SpringBeanUtil.getBeanByClass(TcUserRoleRelService.class);
         userService= SpringBeanUtil.getBeanByClass(TcUserService.class);
     }
 
 
     public static UserVo convertToUserVo(TcUser tcUser){
         UserVo userVo = new UserVo();
-        List<TcRole> roleList = userRoleRelService.getRoleListByUser(tcUser.getId());
-        //角色默认值
-        if (CollectionUtil.isNotEmpty(roleList)){
-            List<String> roleCode = roleList.stream().map(TcRole::getRoleCode).collect(Collectors.toList());
-            userVo.setRoles(roleCode);
-        }else {
-            userVo.setRoles(new ArrayList<>());
-        }
         //初始化accessToken
         Date doRefreshTokenDate= TokenGenerateUtil.getDoRefreshTokenDate();
         TokenVo tokenVo= TokenGenerateUtil.initToken(tcUser.getUsername(),doRefreshTokenDate);
         userVo.setAccessToken(tokenVo.getAccessToken());
         userVo.setRefreshToken(tokenVo.getRefreshToken());
+        userVo.setEmail(tcUser.getEmail());
         userVo.setExpires(doRefreshTokenDate);
         userVo.setUsername(tcUser.getUsername());
         userVo.setUserId(tcUser.getId());
         userVo.setNickName(tcUser.getNickName());
+        userVo.setUserType(tcUser.getUserType());
         return userVo;
     }
 
@@ -120,10 +109,7 @@ public class LoginSessionUtil {
                 sessionMappingData.setSessionId(session.getId());
                 sessionMappingData.setLoginTime(DateUtil.format(now, DatePattern.NORM_DATETIME_FORMATTER));
                 CacheUtil.set(AuthCacheKey.getUserAndSession(username),sessionMappingData);
-                session.setAttribute(SessionAttr.attr_userKey,tcUser);
-
-                List<TcRole> roleList = userRoleRelService.getRoleListByUser(tcUser.getId());
-                session.setAttribute(SessionAttr.attr_roleKey,roleList);
+                UserInfoUtil.initCurrentUser(tcUser);
             }
             //更新最后一次登录时间
             if (StrUtil.isNotBlank(tcUser.getId())){
@@ -218,12 +204,9 @@ public class LoginSessionUtil {
 
 
     private static String getUserNameBySession(){
-        HttpSession httpSession = HttpRequestUtil.getCurrentHttpSession();
-        if (httpSession!=null){
-            TcUser tcUser= (TcUser) httpSession.getAttribute(SessionAttr.attr_userKey);
-            if (tcUser!=null){
-                return tcUser.getUsername();
-            }
+        TcUser currentLoginUserBySession = getCurrentLoginUserBySession();
+        if (currentLoginUserBySession!=null){
+            return currentLoginUserBySession.getUsername();
         }
         return null;
     }

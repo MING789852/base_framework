@@ -1,7 +1,6 @@
 package com.xm.util.auth;
 
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.session.Session;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 
@@ -43,17 +42,7 @@ public class HttpRequestUtil {
             return null;
         }
         //允许创建session设置为false
-        HttpSession httpSession = currentHttpServletRequest.getSession(false);
-        if (httpSession==null){
-            return null;
-        }else {
-//            Session session = StorageSessionUtil.findSessionBySessionId(httpSession.getId());
-//            if (session==null){
-//                httpSession.invalidate();
-//                return null;
-//            }
-            return httpSession;
-        }
+        return currentHttpServletRequest.getSession(false);
     }
 
 
@@ -66,10 +55,6 @@ public class HttpRequestUtil {
         if (currentHttpServletRequest==null){
             return null;
         }
-        HttpSession httpSession = currentHttpServletRequest.getSession();
-        if (httpSession==null){
-            return null;
-        }
-        return httpSession;
+        return currentHttpServletRequest.getSession(true);
     }
 }

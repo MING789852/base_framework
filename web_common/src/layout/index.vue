@@ -2,26 +2,23 @@
 import "animate.css";
 // 引入 src/components/ReIcon/src/offlineIcon.ts 文件中所有使用addIcon添加过的本地图标
 import "@/components/ReIcon/src/offlineIcon";
-import { setType } from "./types";
-import { useLayout } from "./hooks/useLayout";
-import { useAppStoreHook } from "@/store/modules/app";
-import { useSettingStoreHook } from "@/store/modules/settings";
-import { useDataThemeChange } from "@/layout/hooks/useDataThemeChange";
+import {setType} from "./types";
+import {useLayout} from "./hooks/useLayout";
+import {useAppStoreHook} from "@/store/modules/app";
+import {useSettingStoreHook} from "@/store/modules/settings";
+import {useDataThemeChange} from "@/layout/hooks/useDataThemeChange";
 import {
-  h,
-  ref,
-  reactive,
   computed,
-  onMounted,
+  defineAsyncComponent,
+  defineComponent,
+  h,
   onBeforeMount,
-  defineComponent
+  onMounted,
+  reactive,
+  ref,
+  shallowRef
 } from "vue";
-import {
-  useDark,
-  useGlobal,
-  deviceDetection,
-  useResizeObserver
-} from "@pureadmin/utils";
+import {deviceDetection, isNullOrUnDef, useDark, useGlobal, useResizeObserver} from "@pureadmin/utils";
 
 import navbar from "./components/navbar.vue";
 import tag from "./components/tag/index.vue";
@@ -31,6 +28,9 @@ import Vertical from "./components/sidebar/vertical.vue";
 import Horizontal from "./components/sidebar/horizontal.vue";
 import backTop from "@/assets/svg/back_top.svg?component";
 import {useCommonStoreHook} from "@/store/modules/common";
+import {useModalHook} from '@/store/modules/modal'
+import common from "@/utils/common";
+import {getConfig} from "@/config";
 
 const appWrapperRef = ref();
 const { isDark } = useDark();
@@ -106,7 +106,7 @@ useResizeObserver(appWrapperRef, entries => {
       isAutoCloseSidebar = false;
     }
   } else if (width > 990 && !set.sidebar.isClickCollapse) {
-    toggle("desktop", true);
+    toggle("desktop", getConfig().SidebarStatus);
     isAutoCloseSidebar = true;
   } else {
     toggle("desktop", false);
@@ -114,10 +114,19 @@ useResizeObserver(appWrapperRef, entries => {
   }
 });
 
-onMounted(() => {
+const importComponentList = shallowRef([])
+onMounted(async () => {
   if (isMobile) {
     toggle("mobile", false);
   }
+  const modulesRoutes = common.getLayoutVue()
+  // 并行加载所有组件
+  const loadPromises = Object.values(modulesRoutes).map(
+      (componentPromise: () => Promise<any>) =>
+          componentPromise().then(res => res.default)
+  );
+  // 等待所有组件加载完成
+  importComponentList.value = await Promise.all(loadPromises)
 });
 
 onBeforeMount(() => {
@@ -154,6 +163,32 @@ const layoutHeader = defineComponent({
   }
 });
 const loading = computed(()=>useCommonStoreHook().loading)
+
+let modalHook =useModalHook()
+const componentMap = shallowRef({});
+const getDynamicComponent = (path) => {
+  if (common.isStrBlank(path)){
+    return defineComponent({
+      template: '<div></div>'
+    });
+  }
+  if (!componentMap.value[path]) {
+    const componentPromise = common.getVue('/' + path)
+    if (isNullOrUnDef(componentPromise)){
+      return defineComponent({
+        template: '<div>加载失败，组件不存在</div>'
+      });
+    }
+    componentMap.value[path] = defineAsyncComponent(() => {
+      return componentPromise()
+    });
+  }
+  return componentMap.value[path];
+};
+const finish = (data) => {
+  console.log(data)
+  common.jumpResultPage()
+}
 </script>
 
 <template>
@@ -198,6 +233,23 @@ const loading = computed(()=>useCommonStoreHook().loading)
     </div>
     <!-- 系统设置 -->
     <setting />
+    <!-- 动态引入模块组件 -->
+    <component
+        v-for="(item,index) in importComponentList"
+        :key="index"
+        :is="item"
+    />
+    <!-- 全局弹窗组件 -->
+    <el-dialog v-if="modalHook.isGlobalDialogVisible"
+               v-model="modalHook.isGlobalDialogVisible"
+               :show-close="modalHook.globalShowClose"
+               append-to-body fullscreen  destroy-on-close>
+      <component
+          v-bind="modalHook.globalDialogProps"
+          :is="getDynamicComponent(modalHook.globalDialogComponent)"
+          @finish="finish"
+      />
+    </el-dialog>
   </div>
 </template>
 

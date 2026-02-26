@@ -1,6 +1,8 @@
 package com.xm.configuration.datasource;
 
+import cn.hutool.core.util.StrUtil;
 import com.baomidou.dynamic.datasource.DynamicRoutingDataSource;
+import com.baomidou.dynamic.datasource.creator.DataSourceProperty;
 import com.baomidou.dynamic.datasource.creator.DefaultDataSourceCreator;
 import com.baomidou.dynamic.datasource.provider.AbstractDataSourceProvider;
 import com.baomidou.dynamic.datasource.provider.DynamicDataSourceProvider;
@@ -36,6 +38,16 @@ public class DynamicDataSourceConfig{
     @Primary
     public DataSource dynamicDataSource(List<DynamicDataSourceProvider> providers){
         DynamicRoutingDataSource dynamicRoutingDataSource=new DynamicRoutingDataSource(providers);
+        Map<String, DataSourceProperty> dataSourcePropertyMap = dataSourceProperty.getDataSourcePropertyMap();
+        StringBuilder stringBuilder=new StringBuilder();
+        stringBuilder.append("\n");
+        stringBuilder.append("\n");
+        stringBuilder.append(StrUtil.format("【多数据源初始化】数据源->{},主数据源->{}",dataSourcePropertyMap.keySet(), dataSourceProperty.getPrimary())).append("\n");
+        for (Map.Entry<String,DataSourceProperty> entry:dataSourcePropertyMap.entrySet()){
+            DataSourceProperty value = entry.getValue();
+            stringBuilder.append(StrUtil.format("【{}】:【url->{}】",entry.getKey(),value.getUrl(),value.getUsername())).append("\n");
+        }
+        log.info(stringBuilder.toString());
         //设置多数据源中的主数据源
         if (dataSourceProperty.getPrimary()!=null){
             dynamicRoutingDataSource.setPrimary(dataSourceProperty.getPrimary());

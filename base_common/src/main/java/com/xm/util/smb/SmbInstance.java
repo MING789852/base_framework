@@ -16,9 +16,11 @@ import com.hierynomus.smbj.session.Session;
 import com.hierynomus.smbj.share.DiskShare;
 import com.hierynomus.smbj.share.File;
 import com.xm.advice.exception.exception.CommonException;
+import com.xm.util.file.FileValidUtil;
 import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
 
+import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.file.Path;
@@ -27,6 +29,7 @@ import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
 @Slf4j
 @ToString
@@ -153,15 +156,63 @@ public class SmbInstance {
         }
     }
 
+    public void validFileNameOrPath(String fileName){
+       if (FileValidUtil.fileNameHaveIllegalChar(fileName)){
+           throw new CommonException(StrUtil.format("文件名或文件路径->{},不能包含特殊字符->{}",fileName,FileValidUtil.getIllegalCharList()));
+       }
+       if (FileValidUtil.fileNameHaveWindowReservedName(fileName)){
+           throw new CommonException(StrUtil.format("文件名或文件路径->{},不能包含Windows操作系统中的保留名称->{}",fileName,FileValidUtil.getReservedNameList()));
+       }
+    }
+
     public void upload(String shareName,String remoteUrl,String fileName,InputStream inputStream) {
+        upload(shareName,remoteUrl,fileName,IoUtil.readBytes(inputStream));
+    }
+
+    public void uploadWithProcessIllegalName(String shareName,List<String> dirPathList,String fileName,byte[] data) {
+        dirPathList=dirPathList.stream().map(FileValidUtil::processFileName).collect(Collectors.toList());
+        fileName=FileValidUtil.processFileName(fileName);
+        upload(shareName,dirPathList,fileName,data);
+    }
+
+    public void upload(String shareName,List<String> dirPathList,String fileName,byte[] data) {
         login();
-        String filePath=remoteUrl+fileName;
+        String dirPath= StrUtil.join("/",dirPathList);
+        String filePath=dirPath+"/"+fileName;
         try (DiskShare share = (DiskShare) session.connectShare(shareName)) {
-            if (remoteUrl.contains("/") || remoteUrl.contains("\\")) {
-                remoteUrl = remoteUrl.replaceAll("\\\\", "/");
-                String[] filepathArr = remoteUrl.split("/");
+            String vfilepath = "";
+            for (String s : dirPathList) {
+                validFileNameOrPath(s);
+                vfilepath += s + "/";
+                if (!share.folderExists(vfilepath)) {
+                    share.mkdir(vfilepath);
+                }
+            }
+            // 获取文件流.上传文件.
+            File shareFile = share.openFile(filePath, EnumSet.of(AccessMask.GENERIC_WRITE),
+                    EnumSet.of(FileAttributes.FILE_ATTRIBUTE_NORMAL), SMB2ShareAccess.ALL,
+                    SMB2CreateDisposition.FILE_OPEN_IF, EnumSet.noneOf(SMB2CreateOptions.class));
+            try (OutputStream shareOs = shareFile.getOutputStream()) {
+                shareOs.write(data);
+            }
+            log.info("SMB上传文件成功->{}",filePath);
+        } catch (Exception e) {
+            String msg= StrUtil.format("SMB上传文件->【{}】,失败原因->【{}】",filePath,e.getMessage());
+            log.error(msg,e);
+            throw new CommonException(msg);
+        }
+    }
+
+    public void upload(String shareName,String dirPath,String fileName,byte[] data) {
+        login();
+        String filePath=dirPath+fileName;
+        try (DiskShare share = (DiskShare) session.connectShare(shareName)) {
+            if (dirPath.contains("/") || dirPath.contains("\\")) {
+                dirPath = dirPath.replaceAll("\\\\", "/");
+                String[] filepathArr = dirPath.split("/");
                 String vfilepath = "";
                 for (String s : filepathArr) {
+                    validFileNameOrPath(s);
                     vfilepath += s + "/";
                     if (!share.folderExists(vfilepath)) {
                         share.mkdir(vfilepath);
@@ -169,18 +220,17 @@ public class SmbInstance {
                 }
             }
             // 获取文件流.上传文件.
-            File shareFile = share.openFile(remoteUrl+fileName, EnumSet.of(AccessMask.GENERIC_WRITE),
+            File shareFile = share.openFile(dirPath+fileName, EnumSet.of(AccessMask.GENERIC_WRITE),
                     EnumSet.of(FileAttributes.FILE_ATTRIBUTE_NORMAL), SMB2ShareAccess.ALL,
                     SMB2CreateDisposition.FILE_OPEN_IF, EnumSet.noneOf(SMB2CreateOptions.class));
             try (OutputStream shareOs = shareFile.getOutputStream()) {
-                shareOs.write(IoUtil.readBytes(inputStream));
+                shareOs.write(data);
             }
+            log.info("SMB上传文件成功->{}",filePath);
         } catch (Exception e) {
-            String msg= StrUtil.format("SMB上传文件失败->{}",filePath);
+            String msg= StrUtil.format("SMB上传文件->【{}】,失败原因->【{}】",filePath,e.getMessage());
             log.error(msg,e);
             throw new CommonException(msg);
-        }finally {
-            log.info("SMB上传文件成功->{}",filePath);
         }
     }
 }

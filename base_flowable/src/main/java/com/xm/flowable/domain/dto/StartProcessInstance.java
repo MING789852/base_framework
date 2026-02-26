@@ -1,5 +1,6 @@
 package com.xm.flowable.domain.dto;
 
+import com.xm.auth.domain.entity.TcUser;
 import com.xm.flowable.listener.FlowableTaskListener;
 import lombok.Data;
 
@@ -26,5 +27,11 @@ public class StartProcessInstance{
     @NotBlank(message = "详情跳转地址不能为空")
     private String jumpUrl;
     private Map<String, Object> data;
+    //如果创建者不为空，则使用创建者信息
+    //否则使用当前用户信息
+    private TcUser creator;
     private Class<? extends FlowableTaskListener> listener;
+
+    //启动审批人员和当前审批人员相同，则直接通过
+    private boolean autoExecuteTask=false;
 }

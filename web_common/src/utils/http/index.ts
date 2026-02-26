@@ -97,8 +97,10 @@ class PureHttp {
                                             PureHttp.requests = [];
                                         })
                                         .catch(res => {
-                                            console.log(res)
-                                            useUserStoreHook().logOut()
+                                            console.log('刷新token失败->'+res)
+                                            //虽然刷新失败了，但需要确保请求队列里的promise都返回
+                                            PureHttp.requests.forEach(cb => cb(''));
+                                            PureHttp.requests = [];
                                         })
                                         .finally(() => {
                                             PureHttp.isRefreshing = false;
@@ -129,6 +131,8 @@ class PureHttp {
         instance.interceptors.response.use(
             (response: PureHttpResponse) => {
                 const $config = response.config;
+                // 关闭进度条动画
+                NProgress.done();
                 // 判断是否有权限
                 if (response.data) {
                     if (response.data.code === 401) {
@@ -136,8 +140,6 @@ class PureHttp {
                         return response.data
                     }
                 }
-                // 关闭进度条动画
-                NProgress.done();
                 // 优先判断post/get等方法是否传入回调，否则执行初始化设置等回调
                 if (typeof $config.beforeResponseCallback === "function") {
                     $config.beforeResponseCallback(response);

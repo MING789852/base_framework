@@ -32,6 +32,7 @@ import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
 import java.io.IOException;
+import java.lang.reflect.Type;
 import java.nio.charset.Charset;
 import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
@@ -194,4 +195,25 @@ public class ApacheHttpOperation extends HttpOperation{
     public <T> T doJsonRequestReturnObject(String url, HttpMethodEnum methodEnum, Map<String, String> headers, String dataMap, Class<T> tClass) {
         return null;
     }
+
+    @Override
+    public <T> T doJsonRequestReturnObject(String url, HttpMethodEnum methodEnum, Map<String, String> headers, String dataMap, Type type) {
+        return null;
+    }
+
+    @Override
+    public HttpOperationResponse doXWWWFormUrlencodedReturnResponse(String url, HttpMethodEnum methodEnum, Map<String, String> headers, String dataMap) {
+        return null;
+    }
+
+    @Override
+    public String doXWWWFormUrlencodedReturnString(String url, HttpMethodEnum methodEnum, Map<String, String> headers, String dataMap) {
+        return null;
+    }
+
+    @Override
+    public <T> T doXWWWFormUrlencodedReturnObject(String url, HttpMethodEnum methodEnum, Map<String, String> headers, String dataMap, Class<T> tClass) {
+        return null;
+    }
+
 }

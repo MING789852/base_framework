@@ -18,7 +18,7 @@ public class TcDeptController {
     private final TcDeptService tcDeptService;
 
     @PostMapping("selectByList")
-    public Result<List<TcDeptVo>> selectByList(@RequestBody QueryData queryData){
+    public Result<List<TcDeptVo>> selectByList(@RequestBody QueryData<TcDeptVo> queryData){
         return Result.successForData(tcDeptService.selectByList(queryData));
     }
 
@@ -38,9 +38,9 @@ public class TcDeptController {
         return Result.successForData(tcDeptService.initDept());
     }
 
-    @GetMapping("createTcUserWithDeptId")
-    public Result<List<TcUser>> createTcUserWithDeptId(String deptId){
-        return Result.successForData(tcDeptService.createTcUserWithDeptId(deptId));
+    @PostMapping("createTcUserWithDeptId")
+    public Result<List<TcUser>> createTcUserWithDeptId(@RequestBody List<String> deptIdList){
+        return Result.successForData(tcDeptService.createTcUserWithDeptId(deptIdList));
     }
 
     @PostMapping("allocateRoleToDept")

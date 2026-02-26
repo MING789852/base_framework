@@ -33,8 +33,8 @@ class Api implements ApiBase{
     return http.get("/dept/initDept")
   }
 
-  createTcUserWithDeptId = (deptId) => {
-    return http.get("/dept/createTcUserWithDeptId?deptId="+deptId)
+  createTcUserWithDeptId = (data) => {
+    return http.post("/dept/createTcUserWithDeptId",{data:data})
   }
 
   allocateRoleToDept = (deptId,roleCodeList) => {

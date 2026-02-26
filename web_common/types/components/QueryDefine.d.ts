@@ -6,7 +6,7 @@ declare type QueryDefine = {
   // 总数
   total?: number,
   // 查询条件
-  queryParams?: object,
+  queryParams?: any,
   // 排序条件
-  orderByParams?: object,
+  orderByParams?: any,
 }

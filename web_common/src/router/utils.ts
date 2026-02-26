@@ -180,13 +180,17 @@ async function handleAsyncRoutes(routeList:any[]) {
         (v: RouteRecordRaw) => {
           // 防止重复添加路由
           if (
-              router.options.routes[0].children.findIndex(
-                  value => value.path === v.path
-              ) !== -1
+              router.hasRoute(v?.name)
           ) {
             return;
           } else {
+            // 不能直接修改 router.options.routes 数组，因为 Vue Router 会将这个数组设置为只读
+            // 虽然可以打开注释执行添加，但是不一定保证没有意想不到的错误
+            // router.options.routes.push(v)
+            // 切记将路由push到routes后还需要使用addRoute，这样路由才能正常跳转
             router.addRoute(v);
+            common.addPathAndRouterMap(v.path, v)
+            common.addNameAndRouterMap(v.name, v)
           }
         }
     );
@@ -209,9 +213,12 @@ async function handleAsyncRoutes(routeList:any[]) {
             .getRoutes()
             .find(n => n.path === "/");
           router.addRoute(flattenRouters);
+          common.addPathAndRouterMap(v.path, v)
+          common.addNameAndRouterMap(v.name, v)
         }
       }
     );
+    common.notifyRouterReady()
     // formatFlatteningRoutes(addAsyncRoutes(routeList)).map(
     //     (v: RouteRecordRaw) => {
     //       // 防止重复添加路由
@@ -239,7 +246,7 @@ async function handleAsyncRoutes(routeList:any[]) {
   addPathMatch();
 }
 
-function vaildAsyncRoutes(res:HttpResult){
+function validAsyncRoutes(res:HttpResult){
   let routerList = []
   if (res.code === 200) {
     let data = res.data
@@ -253,49 +260,37 @@ function vaildAsyncRoutes(res:HttpResult){
   return routerList
 }
 
-function initRouterActionMapping(res:HttpResult){
-  if (res.code === 200) {
-    let data:any = res.data
-    if (!isNullOrUnDef(data)){
-      let routerActionMapping = data.routerActionMapping
-      if (isNullOrUnDef(routerActionMapping)){
-        routerActionMapping={}
-      }
-      common.initRouterActionMapping(routerActionMapping)
-    }
-  }
-}
-
 /** 初始化路由（`new Promise` 写法防止在异步请求中造成无限循环）*/
 function initRouter() {
+  console.log('initRouter')
   if (getConfig()?.CachingAsyncRoutes) {
     // 开启动态路由缓存本地localStorage
     const key = "async-routes";
     const asyncRouteList = storageLocal().getItem(key) as any;
     if (asyncRouteList && asyncRouteList?.length > 0) {
       return new Promise(resolve => {
-        handleAsyncRoutes(asyncRouteList);
-        resolve(router);
+        handleAsyncRoutes(asyncRouteList).then(() => {
+          resolve(router);
+        });
       });
     } else {
       return new Promise(resolve => {
         getAsyncRoutes().then((res:any) => {
-          initRouterActionMapping(res)
-          let routerList = vaildAsyncRoutes(res)
-          console.log(routerList)
-          handleAsyncRoutes(cloneDeep(routerList));
-          storageLocal().setItem(key, routerList);
-          resolve(router);
+          let routerList = validAsyncRoutes(res)
+          handleAsyncRoutes(cloneDeep(routerList)).then(()=>{
+            storageLocal().setItem(key, routerList);
+            resolve(router);
+          })
         });
       });
     }
   } else {
     return new Promise(resolve => {
       getAsyncRoutes().then((res:any) => {
-        initRouterActionMapping(res)
-        let routerList = vaildAsyncRoutes(res)
-        handleAsyncRoutes(cloneDeep(routerList));
-        resolve(router);
+        let routerList = validAsyncRoutes(res)
+        handleAsyncRoutes(cloneDeep(routerList)).then(()=>{
+          resolve(router);
+        })
       });
     });
   }

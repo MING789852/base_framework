@@ -5,13 +5,15 @@ import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-
 import com.xm.advice.exception.exception.CommonException;
 import com.xm.advice.exception.exception.UnAuthException;
 import com.xm.auth.domain.entity.*;
 import com.xm.auth.domain.vo.*;
-import com.xm.auth.mapper.*;
-import com.xm.auth.service.*;
+import com.xm.auth.mapper.TcRouterMapper;
+import com.xm.auth.service.TcRoleRouterRelService;
+import com.xm.auth.service.TcRouterActionService;
+import com.xm.auth.service.TcRouterService;
+import com.xm.auth.service.TcUserRoleRelService;
 import com.xm.util.auth.UserInfoUtil;
 import com.xm.util.id.SnowIdUtil;
 import com.xm.util.valid.ValidationResult;
@@ -22,7 +24,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Service
@@ -38,51 +39,20 @@ public class TcRouterServiceImpl implements TcRouterService {
 
     private final TcRouterActionService routerActionService;
 
-    private Map<String, Map<String, String>> getCurrentRouterActionMapping(List<TcRouter> routerList) {
-        TcUser currentLoginUserBySession = UserInfoUtil.getCurrentLoginUserBySessionOrToken();
-        if (currentLoginUserBySession==null){
-            throw new UnAuthException("未登录");
-        }
+
+    //外层key是路由编码(名称),内层key是路由操作编码，value是路由操作名称
+    private Map<String, Map<String, String>> handleRouterActionMapping(List<TcRouter> routerList,List<TcRouterAction> routerActionList) {
         Map<String,Map<String, String>> mapMap=new HashMap<>();
         if (CollectionUtil.isEmpty(routerList)){
             return mapMap;
         }
-        List<TcRole> roleListByUser = userRoleRelService.getRoleListByUser(currentLoginUserBySession.getId());
-        if (CollectionUtil.isEmpty(roleListByUser)){
-            return mapMap;
-        }
-        List<String> roleIdList = roleListByUser.stream().map(TcRole::getId).distinct().collect(Collectors.toList());
-
-        Map<String, TcRouter> routerMap =
-                routerList.stream().filter(item -> item.getLevel() != 0).collect(Collectors.toMap(TcRouter::getId, Function.identity()));
-        List<TcRoleRouterActionRel> relList = routerActionService.getRefByRoleAndRouter(roleIdList,new ArrayList<>(routerMap.keySet()));
-        if (CollectionUtil.isEmpty(relList)){
-            return mapMap;
-        }
-
-        List<String> routerActionIdList = relList.stream().map(TcRoleRouterActionRel::getRouterActionId).distinct().collect(Collectors.toList());
-        List<TcRouterAction> routerActionList = routerActionService.getRouterActionDataByIdList(routerActionIdList);
-        if (CollectionUtil.isEmpty(routerActionList)){
-            return mapMap;
-        }
-        Map<String, TcRouterAction> routerActionMap = routerActionList.stream().collect(Collectors.toMap(TcRouterAction::getId, Function.identity()));
-        for (TcRoleRouterActionRel rel:relList){
-            String routerId = rel.getRouterId();
-            String routerActionId = rel.getRouterActionId();
-            TcRouter router = routerMap.get(routerId);
-            TcRouterAction routerAction = routerActionMap.get(routerActionId);
-            if (router==null){
-                continue;
+        Map<String, Map<String, String>> routerIdActionMap = routerActionList.stream()
+                .collect(Collectors.groupingBy(TcRouterAction::getRouterId, Collectors.toMap(TcRouterAction::getActionCode, TcRouterAction::getActionName)));
+        for (TcRouter router:routerList){
+            Map<String, String> atctionMap = routerIdActionMap.get(router.getId());
+            if (CollectionUtil.isNotEmpty(atctionMap)){
+                mapMap.put(router.getName(), atctionMap);
             }
-            if (routerAction==null){
-                continue;
-            }
-            Map<String, String> stringStringMap = mapMap.get(router.getName());
-            if (CollectionUtil.isEmpty(stringStringMap)){
-                stringStringMap=new HashMap<>();
-                mapMap.put(router.getName(),stringStringMap);
-            }
-            stringStringMap.put(routerAction.getActionCode(),routerAction.getActionName());
         }
         return mapMap;
     }
@@ -188,16 +158,12 @@ public class TcRouterServiceImpl implements TcRouterService {
     }
 
     @Override
-    public List<TcRouter> getPrivateRouter(TcUser tcUser){
-        if (tcUser==null){
-            return new ArrayList<>();
-        }
-        List<TcUserRoleRel> tcUserRoleRelList=userRoleRelService.selectByUserId(tcUser.getId());
+    public List<TcRouter> getPrivateRouter(List<TcRole> roleList){
         //角色为空直接返回
-        if (CollectionUtil.isEmpty(tcUserRoleRelList)){
+        if (CollectionUtil.isEmpty(roleList)){
             return new ArrayList<>();
         }
-        List<String> roleIdList=tcUserRoleRelList.stream().map(TcUserRoleRel::getRoleId).collect(Collectors.toList());
+        List<String> roleIdList=roleList.stream().map(TcRole::getId).collect(Collectors.toList());
         List<TcRoleRouterRel> tcRoleRouterRelList = roleRouterRelService.selectByRoleIdList(roleIdList);
         //角色对应的路由id为空则直接返回
         if (CollectionUtil.isEmpty(tcRoleRouterRelList)){
@@ -225,7 +191,7 @@ public class TcRouterServiceImpl implements TcRouterService {
             throw new UnAuthException("未登录");
         }
         JSONObject jsonObject=new JSONObject();
-        if ("admin".equals(tcUser.getUsername())){
+        if (UserInfoUtil.isSuperPrivilege()){
             LambdaQueryWrapper<TcRouter> routerLambdaQueryWrapper=new LambdaQueryWrapper<>();
             routerLambdaQueryWrapper.ne(TcRouter::getLevel,0);
             routerLambdaQueryWrapper.eq(TcRouter::getJudgeEnable,1);
@@ -241,12 +207,24 @@ public class TcRouterServiceImpl implements TcRouterService {
         if (CollectionUtil.isNotEmpty(publicRouter)){
             allRouter.addAll(publicRouter);
         }
-        List<TcRouter> privateRouter=getPrivateRouter(tcUser);
+
+        List<TcRole> roleList = userRoleRelService.getRoleListByUser(tcUser.getId());
+        List<TcRouter> privateRouter=getPrivateRouter(roleList);
         if (CollectionUtil.isNotEmpty(privateRouter)){
             allRouter.addAll(privateRouter);
         }
-        jsonObject.set("routerActionMapping",getCurrentRouterActionMapping(allRouter));
+
+
+        List<String> roleCodeList = roleList.stream().map(TcRole::getRoleCode).collect(Collectors.toList());
+        List<String> routerIdList = allRouter.stream().map(TcRouter::getId).collect(Collectors.toList());
+        List<TcRouterAction> routerActionByUser = routerActionService.getRouterActionByUser(tcUser.getId(), routerIdList);
+        Map<String, Map<String, String>> currentRouterActionMapping = handleRouterActionMapping(allRouter,routerActionByUser);
+        UserInfoUtil.initCurrentRouterActionMapping(currentRouterActionMapping);
+        UserInfoUtil.initCurrentRole(roleList);
+        UserInfoUtil.initCurrentRouter(allRouter);
+        jsonObject.set("routerActionMapping",currentRouterActionMapping);
         jsonObject.set("router",initRouterList(allRouter));
+        jsonObject.set("roles",roleCodeList);
         return jsonObject;
     }
 

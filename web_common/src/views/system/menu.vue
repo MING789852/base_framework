@@ -1,30 +1,31 @@
 <template>
-  <div class="parent">
-    <el-card shadow="never">
-      <template #header>
-        <div style="display: flex;justify-content: space-between">
-          <el-button-group>
-            <template v-if="judgeComponent">
-              <el-button class="font-bold" size="small" type="primary" @click="closeFn">关闭</el-button>
-              <el-button class="font-bold" size="small" type="primary" @click="checkFn">保存</el-button>
-              <el-button class="font-bold" size="small" type="primary" @click="refreshFn">刷新</el-button>
-            </template>
-            <template v-else>
-              <el-button class="font-bold" size="small" type="primary" @click="addData(null,0)">新增</el-button>
-              <el-button class="font-bold" size="small" type="primary" @click="refreshFn">刷新</el-button>
-            </template>
-          </el-button-group>
+  <card-container :show-footer="false">
+    <template #header>
+      <div style="display: flex;justify-content: space-between">
+        <el-button-group>
+          <template v-if="judgeComponent">
+            <el-button class="font-bold" size="small" type="primary" @click="closeFn">关闭</el-button>
+            <el-button class="font-bold" size="small" type="primary" @click="checkFn">保存</el-button>
+            <el-button class="font-bold" size="small" type="primary" @click="refreshFn">刷新</el-button>
+          </template>
+          <template v-else>
+            <el-button class="font-bold" size="small" type="primary" @click="addData(null,0)">新增</el-button>
+            <el-button class="font-bold" size="small" type="primary" @click="refreshFn">刷新</el-button>
+          </template>
+        </el-button-group>
 
-          <div v-if="currentRouter!==null" style="display: flex;justify-content: flex-end;font-weight: bolder;color: red">
-            当前查看路由: {{currentRouter.title}}
-          </div>
+        <div v-if="currentRouter!==null" style="display: flex;justify-content: flex-end;font-weight: bolder;color: red">
+          当前查看路由: {{currentRouter.title}}
         </div>
-      </template>
+      </div>
+    </template>
 
-      <el-row :gutter="20">
-        <el-col :span="12">
-          <el-card shadow="never" style="height: 73vh">
-            <el-scrollbar :style="{height: height}">
+
+    <template #default>
+      <div class="w-full h-full flex gap-6">
+        <div class="basis-1/2 h-full xm-card p-4">
+          <flex-full-scroll-container>
+            <el-scrollbar height="100%">
               <el-tree
                   ref="treeRef"
                   :data="treeData"
@@ -51,54 +52,51 @@
                 </template>
               </el-tree>
             </el-scrollbar>
-          </el-card>
-        </el-col>
-        <el-col :span="12">
-          <el-card v-show="currentRouter!==null" shadow="never" style="height: 73vh">
-            <div class="w-full">
-              <div class="w-full flex justify-start">
+          </flex-full-scroll-container>
+        </div>
+        <div class="basis-1/2">
+
+          <common-table v-show="currentRouter!==null" ref="commonTableRef" :table-type="'action'"  :columns="columns"
+                        :table-button="tableButton" :table-fn="tableFn" :dict-list="dictList"
+                        :show-page="false" :show-selection="false">
+            <template #header_left>
+              <el-button-group>
                 <el-button size="small" type="primary" @click="addRouterAction">新增</el-button>
                 <el-button size="small" type="primary" @click="refreshRouterActionTable">刷新</el-button>
-                <el-button size="small" type="primary" @click="initCommonTableRouterAction">初始化通用表格操作</el-button>
-              </div>
-              <el-table
-                  style="font-size: 12px;"
-                  element-loading-text="加载中..."
-                  :data="routerActionTableData"
-                  :border="false">
-                <template v-for="item in columns" :key="item.prop">
-                  <CommonTableColumn :item="item" :dict-list="routerActionDictMapping"/>
-                </template>
-                <el-table-column header-align="center" align="center" label="操作" >
-                  <template #default="scope">
-                    <a style="cursor: pointer;color: #409EFF" @click="updateRouterAction(scope.row)">修改</a>
-                    <a style="cursor: pointer;color: #409EFF;margin-left: 8px" @click="deleteRouterAction(scope.row)">删除</a>
-                  </template>
-                </el-table-column>
-              </el-table>
-            </div>
-          </el-card>
-        </el-col>
-      </el-row>
-    </el-card>
+                <el-button size="small" type="primary" @click="copyRouterAction">复制</el-button>
+                <el-button size="small" type="primary" @click="pasteRouterAction">粘贴</el-button>
+              </el-button-group>
+            </template>
 
-  </div>
+            <template #column>
+              <el-table-column header-align="center" align="center" label="操作" >
+                <template #default="scope">
+                  <a style="cursor: pointer;color: #409EFF" @click="updateRouterAction(scope.row)">修改</a>
+                  <a style="cursor: pointer;color: #409EFF;margin-left: 8px" @click="deleteRouterAction(scope.row)">删除</a>
+                </template>
+              </el-table-column>
+            </template>
+          </common-table>
+        </div>
+      </div>
+    </template>
+  </card-container>
 </template>
 
 <script setup lang="tsx">
-import {onMounted, ref} from "vue";
+import {onMounted, ref, useTemplateRef} from "vue";
 import {message} from "@/utils/message";
-import {addDialog} from "@/components/ReDialog/index";
 import systemMenuApi from "@/api/systemMenuApi";
-import DetailForm from "@/components/detailForm/detailForm.vue";
 import {ElTree} from "element-plus";
-import contentConfig from "@/config/content";
 import QueryTypeEnum from "@/enums/QueryTypeEnum";
 import showDialog from "@/utils/ConfirmDialog";
 import common from "@/utils/common";
 import systemRouterActionApi from "@/api/systemRouterActionApi";
-import CommonTableColumn from "@/components/table/commonTableColumn.vue";
 import ColumnTypeEnum from "@/enums/ColumnTypeEnum";
+import CardContainer from "@/components/CardContainer/CardContainer.vue";
+import FlexFullScrollContainer from "@/components/FlexFullScrollContainer/FlexFullScrollContainer.vue";
+import CommonTable from "@/components/table/commonTable.vue";
+import TableFnClass from "@/class/TableFnClass";
 defineOptions({
   name: "system-dept"
 });
@@ -116,13 +114,12 @@ const props=defineProps({
 })
 const selectKey = ref(props.checkList)
 const emits = defineEmits(['componentBack', 'check'])
-const height=ref(contentConfig.dataHeight)
 const treeRef = ref<InstanceType<typeof ElTree>>()
 const treeData = ref<Array<any>>([]);
 const loading = ref(false);
 const detailData = ref({})
 const detailChildrenColumns:Array<DetailColumnDefine> = [
-  {prop: 'parentTitle', label: '父菜单', disabled: true, type: QueryTypeEnum.INPUT},
+  {prop: 'parentId', label: '父菜单', type: QueryTypeEnum.OPTION},
   {prop: "name", label: "CODE", type: QueryTypeEnum.INPUT, placeholder: '必填'},
   {prop: "path", label: "URL", type: QueryTypeEnum.INPUT, placeholder: '必填'},
   {prop: "title", label: "标题", type: QueryTypeEnum.INPUT, placeholder: '必填'},
@@ -150,7 +147,12 @@ const dictList = ref({
   keepAlive: defaultDict,
   hiddenTag: defaultDict,
   judgePublic: defaultDict,
-  fullscreen: defaultDict
+  fullscreen: defaultDict,
+  actionType:{
+    0:'按钮',
+    1:'函数',
+    2:'其它'
+  }
 })
 
 const columns=ref<ColumnDefine[]>([
@@ -158,14 +160,19 @@ const columns=ref<ColumnDefine[]>([
   {label: "操作名称",prop: "actionName",query: false, type: ColumnTypeEnum.COMMON},
   {label: "操作类型",prop: "actionType",query: false, type: ColumnTypeEnum.DICT_COMMON}
 ])
-const routerActionTableData = ref([])
-const routerActionDictMapping = ref({
-  actionType:{
-    0:'按钮',
-    1:'函数',
-    2:'其它'
-  }
+const tableFn = new TableFnClass()
+const tableButton = ref<CommonTableButton>({
+  queryFn: false,
+  addFn: false,
+  saveFn: false,
+  deleteFn: false,
+  refreshFn: false,
+  initQueryFn: false,
+  exportExcelFn: false
 })
+tableFn.initFn = () => {}
+const commonTableRef = useTemplateRef<InstanceType<typeof CommonTable>>('commonTableRef')
+
 interface RouterInterface {
   name?:string,
   path?:string,
@@ -173,17 +180,71 @@ interface RouterInterface {
   id?:string
 }
 const currentRouter = ref<RouterInterface>(null)
+onMounted(() => {
+  //加载数据
+  getData()
+})
 const refreshRouterActionTable = () => {
   common.handleRequestApi(systemRouterActionApi.getRouterActionDataByRouter(currentRouter.value)).then(res=>{
-    routerActionTableData.value = res.data
+    commonTableRef.value.tableData = res.data
   })
 }
 const checkRouterAction = (node, data) => {
   currentRouter.value = data
   refreshRouterActionTable()
 }
-const initCommonTableRouterAction = () => {
 
+interface RouterAction{
+  actionCode:string,
+  actionName:string
+  actionType:string
+}
+
+const copyRouterAction = () => {
+  let list:any[] = commonTableRef.value.tableData
+  let copyList:RouterAction[] = []
+  if (!common.isEmptyArr(list)){
+    list.forEach((item)=>{
+      copyList.push({
+        actionCode: item.actionCode,
+        actionName: item.actionName,
+        actionType: item.actionType
+      })
+    })
+  }
+  common.copyText(JSON.stringify(copyList))
+  message('已复制到粘贴板',{type:'success'})
+}
+const pasteRouterAction = () => {
+  let columns: Array<DetailColumnDefine> = [
+    {prop: 'json', label: 'JSON配置',type: QueryTypeEnum.AREA_INPUT,placeholder:'此处粘贴'},
+  ]
+  let params:OpenInputDialogDefine = {
+    columns: columns,
+    callBack: (result) => {
+      let json = result.data.json
+      if (common.isStrBlank(json)){
+        message('请输入JSON配置', { type: 'error' })
+        return
+      }
+      let dataList:RouterAction[] = JSON.parse(json)
+      requestRouterActionApi(dataList,()=>{
+        result.done()
+      })
+    }
+  }
+  common.openInputDialog(params)
+}
+const requestRouterActionApi = (dataList:any[],callBack:()=>void) => {
+  let data = {
+    router:currentRouter.value,
+    routerActionList:dataList
+  }
+  common.handleRequestApi(systemRouterActionApi.saveRouterActionData(data)).then(()=>{
+    message('操作成功',{type:'success'})
+    refreshRouterActionTable()
+    callBack?.()
+  })
 }
 const addOrUpdateRouterAction = (row:any) => {
   const routerActionColumns:Array<DetailColumnDefine> = [
@@ -192,17 +253,17 @@ const addOrUpdateRouterAction = (row:any) => {
     {label: "操作类型",prop: "actionType", type: QueryTypeEnum.OPTION, placeholder: '选填,默认按钮'},
   ];
   let defaultValue = ref(row)
-  common.openInputDialog(routerActionColumns,routerActionDictMapping,defaultValue,(result)=>{
-    let data = {
-      router:currentRouter.value,
-      routerActionList:[result.data]
+  let params:OpenInputDialogDefine = {
+    columns: routerActionColumns,
+    dictMapping: dictList,
+    defaultValue:defaultValue,
+    callBack: (result) => {
+      requestRouterActionApi([result.data],()=>{
+        result.done()
+      })
     }
-    common.handleRequestApi(systemRouterActionApi.saveRouterActionData(data)).then(res=>{
-      message('操作成功',{type:'success'})
-      refreshRouterActionTable()
-      result.done()
-    })
-  })
+  }
+  common.openInputDialog(params)
 }
 const addRouterAction = () => {
   addOrUpdateRouterAction({})
@@ -211,49 +272,36 @@ const updateRouterAction = (row:any) => {
   addOrUpdateRouterAction(row)
 }
 const deleteRouterAction = (row:any) => {
-  common.handleRequestApi(systemRouterActionApi.deleteRouterActionData([row])).then(res=>{
+  common.handleRequestApi(systemRouterActionApi.deleteRouterActionData([row])).then(()=>{
     message('操作成功',{type:'success'})
     refreshRouterActionTable()
   })
 }
-
-
-
-
-onMounted(() => {
-  //加载数据
-  getData()
-})
 const addData = (parentRouter, level:number) => {
-  const newDetailColumns = ref([])
+  let newDetailColumns:Array<DetailColumnDefine>
   detailData.value = {}
   if (level === 1) {
     detailData.value = {
-      parentTitle: parentRouter.title
+      parentId: parentRouter.title
     }
-    newDetailColumns.value=detailChildrenColumns
+    newDetailColumns=detailChildrenColumns
   } else {
-    newDetailColumns.value=detailParentColumns
+    newDetailColumns=detailParentColumns
   }
-  addDialog({
-    width: "40%",
-    title: "新增",
-    props: {
-      columns: newDetailColumns,
-      propData: detailData,
-      dictList: dictList
-    },
-    contentRenderer: () => DetailForm,
-    beforeSure(done, { options, index }) {
+  let params:OpenInputDialogDefine = {
+    columns: newDetailColumns,
+    dictMapping: dictList,
+    defaultValue:detailData,
+    callBack: (result) => {
       let data = {
         parentRouter: parentRouter,
-        addRouter: options.props.propData
+        addRouter: result.data
       }
       systemMenuApi.addRouter(data).then((res:any)=>{
         if (res.code === 200) {
           message('新增成功',{type:'success'})
           getData()
-          done()
+          result.done()
         } else {
           message(res.msg,{type:'error'})
         }
@@ -261,10 +309,11 @@ const addData = (parentRouter, level:number) => {
         message(e,{type:'error'})
       })
     }
-  })
+  }
+  common.openInputDialog(params)
 }
 const removeData = (node, data) => {
-  showDialog('是否删除').then((res)=>{
+  showDialog('是否删除').then(()=>{
     systemMenuApi.deleteRouter([data]).then((res:any)=>{
       if (res.code === 200) {
         message('操作成功',{type:'success'})
@@ -278,32 +327,30 @@ const removeData = (node, data) => {
   })
 }
 const updateData = (node, data) => {
-  const newDetailColumns = ref([])
+  let newDetailColumns:Array<DetailColumnDefine>
   detailData.value = data
   if (node.data.level === 0) {
-    newDetailColumns.value = detailParentColumns
+    newDetailColumns = detailParentColumns
   }else {
     if (node.parent&&node.parent.data){
       let parentRouter = node.parent.data
-      detailData.value['parentTitle'] = parentRouter.title
+      detailData.value['parentId'] = parentRouter.id
     }
-    newDetailColumns.value = detailChildrenColumns
+    let parentIdMapping = {}
+    treeData.value.forEach(item=>parentIdMapping[item.id]=item.title)
+    dictList.value = {...dictList.value,...{parentId:parentIdMapping}}
+    newDetailColumns = detailChildrenColumns
   }
-  addDialog({
-    width: "40%",
-    title: "新增",
-    props: {
-      columns: newDetailColumns,
-      propData: detailData,
-      dictList: dictList
-    },
-    contentRenderer: () => DetailForm,
-    beforeSure(done, { options, index }) {
-      systemMenuApi.updateRouter(options.props.propData).then((res:any)=>{
+  let params:OpenInputDialogDefine = {
+    columns: newDetailColumns,
+    dictMapping: dictList,
+    defaultValue:detailData,
+    callBack: (result) => {
+      systemMenuApi.updateRouter(result.data).then((res:any)=>{
         if (res.code === 200) {
           message('修改成功',{type:'success'})
           getData()
-          done()
+          result.done()
         } else {
           message(res.msg,{type:'error'})
         }
@@ -311,7 +358,8 @@ const updateData = (node, data) => {
         message(e,{type:'error'})
       })
     }
-  })
+  }
+  common.openInputDialog(params)
 }
 const getData = () => {
   loading.value = true
@@ -327,7 +375,7 @@ const getData = () => {
     } else  {
       message(res.msg,{type:'error'})
     }
-  }).catch(res => {
+  }).catch(() => {
     message('请求失败',{type:'error'})
   }).finally(() => {
     loading.value = false
@@ -400,18 +448,12 @@ const checkNode = (node,status) => {
 </script>
 
 <style scoped lang="scss">
-  .parent {
-    height: 100%;
-  }
-  .parent> :first-child{
-    height: 100%;
-  }
-  .custom-tree-node {
-    flex: 1;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    font-size: 14px;
-    padding-right: 8px;
-  }
+.custom-tree-node {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 14px;
+  padding-right: 8px;
+}
 </style>

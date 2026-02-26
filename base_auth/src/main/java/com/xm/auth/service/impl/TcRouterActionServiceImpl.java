@@ -10,6 +10,7 @@ import com.xm.auth.domain.entity.*;
 import com.xm.auth.mapper.TcRoleRouterActionRelMapper;
 import com.xm.auth.mapper.TcRouterActionMapper;
 import com.xm.auth.service.TcRouterActionService;
+import com.xm.auth.service.TcUserRoleRelService;
 import com.xm.util.auth.UserInfoUtil;
 import com.xm.util.id.SnowIdUtil;
 import com.xm.util.valid.ValidationUtils;
@@ -32,6 +33,8 @@ public class TcRouterActionServiceImpl implements TcRouterActionService {
     private final TcRouterActionMapper routerActionMapper;
 
     private final TcRoleRouterActionRelMapper roleRouterActionRelMapper;
+
+    private final TcUserRoleRelService userRoleRelService;
 
 
     @Override
@@ -154,6 +157,18 @@ public class TcRouterActionServiceImpl implements TcRouterActionService {
         }else {
             return relList.stream().map(TcRoleRouterActionRel::getRouterActionId).collect(Collectors.toList());
         }
+    }
+
+    @Override
+    public List<TcRouterAction> getRouterActionByUser(String userId, List<String> routerIdList) {
+        if (StrUtil.isBlank(userId)){
+            throw new CommonException("用户ID为空");
+        }
+        List<TcRole> roleListByUser = userRoleRelService.getRoleListByUser(userId);
+        if (CollectionUtil.isEmpty(roleListByUser)){
+            return new ArrayList<>();
+        }
+        return getRouterActionByRoleAndRouter(roleListByUser.stream().map(TcRole::getId).collect(Collectors.toList()),routerIdList);
     }
 
     @Override

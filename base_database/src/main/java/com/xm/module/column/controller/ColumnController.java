@@ -1,5 +1,6 @@
 package com.xm.module.column.controller;
 
+import com.xm.annotation.IgnoreAuth;
 import com.xm.module.column.domain.params.ColumnConfig;
 import com.xm.core.params.ColumnProps;
 import com.xm.module.column.service.ColumnService;
@@ -15,6 +16,7 @@ import java.util.List;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("column")
+@IgnoreAuth
 public class ColumnController {
 
     private final ColumnService columnService;

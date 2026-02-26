@@ -2,12 +2,13 @@ package com.xm.core.msg;
 
 
 import com.xm.core.msg.params.Msg;
+import com.xm.core.msg.params.MsgSendResult;
 
 import java.util.List;
 
 public interface MsgService {
 
-    boolean createOrUpdateMsg(List<Msg> msgList);
+    MsgSendResult createOrUpdateMsg(List<Msg> msgList);
 
     boolean deleteMsgList(String businessType, String businessKey);
 

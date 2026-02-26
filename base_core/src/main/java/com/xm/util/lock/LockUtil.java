@@ -15,8 +15,16 @@ public class LockUtil {
         lockService = SpringBeanUtil.getBeanByClass(LockService.class);
     }
 
+    public static <T> T lock(String lockCode, Supplier<T> executeSupplier){
+        return lockService.lock(lockCode,executeSupplier);
+    }
+
     public static <T> T lock(String lockCode, Supplier<T> executeSupplier, Consumer<Exception> exceptionConsumer){
         return lockService.lock(lockCode,executeSupplier,exceptionConsumer);
+    }
+
+    public static <T> T tryLock(String lockCode, String lockMsg, Supplier<T> executeSupplier){
+        return lockService.tryLock(lockCode,lockMsg,executeSupplier);
     }
 
     public static <T> T tryLock(String lockCode, String lockMsg, Supplier<T> executeSupplier, Consumer<Exception> exceptionConsumer){

@@ -25,10 +25,10 @@ importers:
         version: 1.4.0(vue@3.5.12(typescript@5.6.3))
       '@pureadmin/descriptions':
         specifier: ^1.2.0
-        version: 1.2.0(element-plus@2.9.4(vue@3.5.12(typescript@5.6.3)))(typescript@5.6.3)
+        version: 1.2.0(element-plus@2.11.8(vue@3.5.12(typescript@5.6.3)))(typescript@5.6.3)
       '@pureadmin/table':
         specifier: ^3.1.2
-        version: 3.1.2(element-plus@2.9.4(vue@3.5.12(typescript@5.6.3)))(typescript@5.6.3)
+        version: 3.1.2(element-plus@2.11.8(vue@3.5.12(typescript@5.6.3)))(typescript@5.6.3)
       '@pureadmin/utils':
         specifier: ^2.4.5
         version: 2.4.5(echarts@5.5.0)(vue@3.5.12(typescript@5.6.3))
@@ -47,9 +47,6 @@ importers:
       big.js:
         specifier: ^6.2.1
         version: 6.2.1
-      countup.js:
-        specifier: ^2.8.0
-        version: 2.8.0
       date-fns:
         specifier: ^2.30.0
         version: 2.30.0
@@ -63,14 +60,17 @@ importers:
         specifier: ^5.5.0
         version: 5.5.0
       element-plus:
-        specifier: ^2.9.4
-        version: 2.9.4(vue@3.5.12(typescript@5.6.3))
+        specifier: ^2.11.8
+        version: 2.11.8(vue@3.5.12(typescript@5.6.3))
       js-cookie:
         specifier: ^3.0.5
         version: 3.0.5
       localforage:
         specifier: ^1.10.0
         version: 1.10.0
+      lodash:
+        specifier: ^4.17.21
+        version: 4.17.21
       mitt:
         specifier: ^3.0.1
         version: 3.0.1
@@ -98,6 +98,9 @@ importers:
       spark-md5:
         specifier: ^3.0.2
         version: 3.0.2
+      streamsaver:
+        specifier: ^2.0.6
+        version: 2.0.6
       v-viewer:
         specifier: ^3.0.11
         version: 3.0.11(vue@3.5.12(typescript@5.6.3))
@@ -165,6 +168,9 @@ importers:
       '@types/js-cookie':
         specifier: ^3.0.6
         version: 3.0.6
+      '@types/lodash':
+        specifier: ^4.17.16
+        version: 4.17.20
       '@types/node':
         specifier: ^20.11.24
         version: 20.11.24
@@ -177,6 +183,9 @@ importers:
       '@types/sortablejs':
         specifier: ^1.15.8
         version: 1.15.8
+      '@types/streamsaver':
+        specifier: ^2.0.5
+        version: 2.0.5
       '@typescript-eslint/eslint-plugin':
         specifier: ^7.1.1
         version: 7.1.1(@typescript-eslint/parser@7.1.1(eslint@8.57.0)(typescript@5.6.3))(eslint@8.57.0)(typescript@5.6.3)
@@ -680,6 +689,11 @@ packages:
 
   '@element-plus/icons-vue@2.3.1':
     resolution: {integrity: sha512-XxVUZv48RZAd87ucGS48jPf6pKu0yV5UCg9f4FFwtrYxXOwWuVJo6wOvSLKEoMQKjv8GsX/mhP6UsC1lRwbUWg==}
+    peerDependencies:
+      vue: ^3.2.0
+
+  '@element-plus/icons-vue@2.3.2':
+    resolution: {integrity: sha512-OzIuTaIfC8QXEPmJvB4Y4kw34rSXdCJzxcD1kFStBvr8bK6X1zQAYDo0CNMjojnfTqRQCJ0I7prlErcoRiET2A==}
     peerDependencies:
       vue: ^3.2.0
 
@@ -1402,8 +1416,8 @@ packages:
   '@types/lodash-es@4.17.12':
     resolution: {integrity: sha512-0NgftHUcV4v34VhXm8QBSftKVXtbkBG3ViCjs6+eJ5a6y6Mi/jiFGPc1sC7QK+9BFhWrURE3EOggmWaSxL9OzQ==}
 
-  '@types/lodash@4.14.202':
-    resolution: {integrity: sha512-OvlIYQK9tNneDlS0VN54LLd5uiPCBOp7gS5Z0f1mjoJYBrtStzgmJBxONW3U6OZqdtNzZPmn9BS/7WI7BFFcFQ==}
+  '@types/lodash@4.17.20':
+    resolution: {integrity: sha512-H3MHACvFUEiujabxhaI/ImO6gUrd8oOurg7LQtS7mbwIXA/cUqWrvBsaeJ23aZEPk1TAYkurjfMbSELfoCXlGA==}
 
   '@types/minimist@1.2.5':
     resolution: {integrity: sha512-hov8bUuiLiyFPGyFPE1lwWhmzYbirOXQNNo40+y3zow8aFVTeyn3VWL0VFFfdNddA8S4Vf0Tc062rzyNr7Paag==}
@@ -1425,6 +1439,9 @@ packages:
 
   '@types/sortablejs@1.15.8':
     resolution: {integrity: sha512-b79830lW+RZfwaztgs1aVPgbasJ8e7AXtZYHTELNXZPsERt4ymJdjV4OccDbHQAvHrCcFpbF78jkm0R6h/pZVg==}
+
+  '@types/streamsaver@2.0.5':
+    resolution: {integrity: sha512-93o0zjV8swEhR2YI57h/2ytbJF8bJh7sI9GNB02TLJHdM4fWDxZuChwfWhyD8vt2ub4kw4rsfZ0C0yAUX+3gcg==}
 
   '@types/tinycolor2@1.4.6':
     resolution: {integrity: sha512-iEN8J0BoMnsWBqjVbWH/c0G0Hh7O21lpR2/+PrvAVgWdzL7eexIFm4JN/Wn10PTcmNdtS6U67r499mlWMXOxNw==}
@@ -1991,9 +2008,6 @@ packages:
       typescript:
         optional: true
 
-  countup.js@2.8.0:
-    resolution: {integrity: sha512-f7xEhX0awl4NOElHulrl4XRfKoNH3rB+qfNSZZyjSZhaAoUk6elvhH+MNxMmlmuUJ2/QNTWPSA7U4mNtIAKljQ==}
-
   cross-spawn@7.0.3:
     resolution: {integrity: sha512-iRDPJKUPVEND7dHPO8rkbOnPpyDygcDFtWjpeWNCgy8WP2rXcxXL8TskReQl6OrB2G7+UJrags1q15Fudc7G6w==}
     engines: {node: '>= 8'}
@@ -2126,8 +2140,8 @@ packages:
   dayjs@1.11.10:
     resolution: {integrity: sha512-vjAczensTgRcqDERK0SR2XMwsF/tSvnvlv6VcF2GIhg6Sx4yOIt/irsr1RDJsKiIyBzJDpCoXiWWq28MqH2cnQ==}
 
-  dayjs@1.11.13:
-    resolution: {integrity: sha512-oaMBel6gjolK862uaPQOVTA7q3TZhuSvuMQAAglQDOWYO9A91IrAOUJEyKVlqJlHE0vq5p5UXxzdPfMH/x6xNg==}
+  dayjs@1.11.19:
+    resolution: {integrity: sha512-t5EcLVS6QPBNqM2z8fakk/NKel+Xzshgt8FFKAn+qwlD1pzZWxh0nVCrvFK7ZDb6XucZeF9z8C7CBWTRIVApAw==}
 
   de-indent@1.0.2:
     resolution: {integrity: sha512-e/1zu3xH5MQryN2zdVaF0OrdNLUbvWxzMbi+iNA6Bky7l1RoP8a2fIbRocyHclXt/arDrrR6lL3TqFD9pMQTsg==}
@@ -2253,8 +2267,8 @@ packages:
   electron-to-chromium@1.4.699:
     resolution: {integrity: sha512-I7q3BbQi6e4tJJN5CRcyvxhK0iJb34TV8eJQcgh+fR2fQ8miMgZcEInckCo1U9exDHbfz7DLDnFn8oqH/VcRKw==}
 
-  element-plus@2.9.4:
-    resolution: {integrity: sha512-sGnW0wd9zf6lEGixXV2gfwx3X6VTMkP52qTkX7zbURJ2oariyslrKTBh2txt1sdn1pUvj2l0KY3OfSXoZGmDOw==}
+  element-plus@2.11.8:
+    resolution: {integrity: sha512-2wzSj2uubFU1f0t/gHkkE1d09mUgV18fSZX5excw3Ar6hyWcxph4E57U8dgYLDt7HwkKYv1BiqPyBdy0WqWlOA==}
     peerDependencies:
       vue: ^3.2.0
 
@@ -2308,9 +2322,6 @@ packages:
   escalade@3.1.2:
     resolution: {integrity: sha512-ErCHMCae19vR8vQGe50xIsVomy19rg6gFu3+r3jkEO46suLMWBksvVyoGgQV+jOfl84ZSOSlmv6Gxa89PmTGmA==}
     engines: {node: '>=6'}
-
-  escape-html@1.0.3:
-    resolution: {integrity: sha512-NiSupZ4OeuGwr68lGIeym/ksIZMJodUGOSCZ/FSnTxcrekbvqrgdUxlJOMpijaKZVjAJrWrGs/6Jy8OMuyj9ow==}
 
   escape-string-regexp@1.0.5:
     resolution: {integrity: sha512-vbRorB5FUQWvla16U8R/qgaFIya2qGzwDrNmCZuYKrbdSUMG6I1ZCGQRefkRVhuOkIGVne7BQ35DSfo1qvJqFg==}
@@ -4123,6 +4134,9 @@ packages:
   std-env@3.7.0:
     resolution: {integrity: sha512-JPbdCEQLj1w5GilpiHAx3qJvFndqybBysA3qUOnznweH4QbNYUsW/ea8QzSrnh0vNsezMMw5bcVool8lM0gwzg==}
 
+  streamsaver@2.0.6:
+    resolution: {integrity: sha512-LK4e7TfCV8HzuM0PKXuVUfKyCB1FtT9L0EGxsFk5Up8njj0bXK8pJM9+Wq2Nya7/jslmCQwRK39LFm55h7NBTw==}
+
   string-argv@0.3.2:
     resolution: {integrity: sha512-aqD2Q0144Z+/RqG52NeHEkZauTAUWJO8c6yTftGJKO3Tja5tUgIfmIl6kExvhtxSDP7fXB6DvzkfMpCd/F3G+Q==}
     engines: {node: '>=0.6.19'}
@@ -5300,6 +5314,10 @@ snapshots:
     dependencies:
       vue: 3.5.12(typescript@5.6.3)
 
+  '@element-plus/icons-vue@2.3.2(vue@3.5.12(typescript@5.6.3))':
+    dependencies:
+      vue: 3.5.12(typescript@5.6.3)
+
   '@esbuild/aix-ppc64@0.19.12':
     optional: true
 
@@ -5777,17 +5795,17 @@ snapshots:
     dependencies:
       '@babel/runtime': 7.24.1
 
-  '@pureadmin/descriptions@1.2.0(element-plus@2.9.4(vue@3.5.12(typescript@5.6.3)))(typescript@5.6.3)':
+  '@pureadmin/descriptions@1.2.0(element-plus@2.11.8(vue@3.5.12(typescript@5.6.3)))(typescript@5.6.3)':
     dependencies:
       '@element-plus/icons-vue': 2.3.1(vue@3.5.12(typescript@5.6.3))
-      element-plus: 2.9.4(vue@3.5.12(typescript@5.6.3))
+      element-plus: 2.11.8(vue@3.5.12(typescript@5.6.3))
       vue: 3.5.12(typescript@5.6.3)
     transitivePeerDependencies:
       - typescript
 
-  '@pureadmin/table@3.1.2(element-plus@2.9.4(vue@3.5.12(typescript@5.6.3)))(typescript@5.6.3)':
+  '@pureadmin/table@3.1.2(element-plus@2.11.8(vue@3.5.12(typescript@5.6.3)))(typescript@5.6.3)':
     dependencies:
-      element-plus: 2.9.4(vue@3.5.12(typescript@5.6.3))
+      element-plus: 2.11.8(vue@3.5.12(typescript@5.6.3))
       vue: 3.5.12(typescript@5.6.3)
     transitivePeerDependencies:
       - typescript
@@ -5895,9 +5913,9 @@ snapshots:
 
   '@types/lodash-es@4.17.12':
     dependencies:
-      '@types/lodash': 4.14.202
+      '@types/lodash': 4.17.20
 
-  '@types/lodash@4.14.202': {}
+  '@types/lodash@4.17.20': {}
 
   '@types/minimist@1.2.5': {}
 
@@ -5914,6 +5932,8 @@ snapshots:
   '@types/semver@7.5.8': {}
 
   '@types/sortablejs@1.15.8': {}
+
+  '@types/streamsaver@2.0.5': {}
 
   '@types/tinycolor2@1.4.6': {}
 
@@ -6634,8 +6654,6 @@ snapshots:
     optionalDependencies:
       typescript: 5.6.3
 
-  countup.js@2.8.0: {}
-
   cross-spawn@7.0.3:
     dependencies:
       path-key: 3.1.1
@@ -6822,7 +6840,7 @@ snapshots:
 
   dayjs@1.11.10: {}
 
-  dayjs@1.11.13: {}
+  dayjs@1.11.19: {}
 
   de-indent@1.0.2: {}
 
@@ -6936,18 +6954,17 @@ snapshots:
 
   electron-to-chromium@1.4.699: {}
 
-  element-plus@2.9.4(vue@3.5.12(typescript@5.6.3)):
+  element-plus@2.11.8(vue@3.5.12(typescript@5.6.3)):
     dependencies:
       '@ctrl/tinycolor': 3.6.1
-      '@element-plus/icons-vue': 2.3.1(vue@3.5.12(typescript@5.6.3))
+      '@element-plus/icons-vue': 2.3.2(vue@3.5.12(typescript@5.6.3))
       '@floating-ui/dom': 1.6.3
       '@popperjs/core': '@sxzz/popperjs-es@2.11.7'
-      '@types/lodash': 4.14.202
+      '@types/lodash': 4.17.20
       '@types/lodash-es': 4.17.12
       '@vueuse/core': 9.13.0(vue@3.5.12(typescript@5.6.3))
       async-validator: 4.2.5
-      dayjs: 1.11.13
-      escape-html: 1.0.3
+      dayjs: 1.11.19
       lodash: 4.17.21
       lodash-es: 4.17.21
       lodash-unified: 1.0.3(@types/lodash-es@4.17.12)(lodash-es@4.17.21)(lodash@4.17.21)
@@ -7036,8 +7053,6 @@ snapshots:
       '@esbuild/win32-x64': 0.21.5
 
   escalade@3.1.2: {}
-
-  escape-html@1.0.3: {}
 
   escape-string-regexp@1.0.5: {}
 
@@ -8767,6 +8782,8 @@ snapshots:
 
   std-env@3.7.0:
     optional: true
+
+  streamsaver@2.0.6: {}
 
   string-argv@0.3.2: {}
 

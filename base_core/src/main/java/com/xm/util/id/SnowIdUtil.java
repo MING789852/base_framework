@@ -4,7 +4,7 @@ import cn.hutool.core.lang.generator.SnowflakeGenerator;
 import com.xm.util.bean.SpringBeanUtil;
 
 public class SnowIdUtil {
-    private static SnowflakeGenerator snowflakeGenerator;
+    private static final SnowflakeGenerator snowflakeGenerator;
 
     static {
         snowflakeGenerator= SpringBeanUtil.getBeanByClass(SnowflakeGenerator.class);

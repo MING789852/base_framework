@@ -10,5 +10,7 @@ import org.springframework.context.annotation.Configuration;
 public class BaseUrlProperty {
     private String fgUrl;
     private String bgUrl;
+    private String fgOutUrl;
+    private String bgOutUrl;
     private String callBackUrl;
 }

@@ -16,10 +16,12 @@
     <result column="update_date" jdbcType="TIMESTAMP" property="updateDate" />
     <result column="title" jdbcType="LONGVARCHAR" property="title" />
     <result column="content" jdbcType="LONGVARCHAR" property="content" />
+    <result column="group_id" jdbcType="VARCHAR" property="groupId" />
+    <result column="group_at_all" jdbcType="VARCHAR" property="groupAtAll" />
   </resultMap>
   <sql id="Base_Column_List">
     <!--@mbg.generated-->
     id, business_type, business_key, `type`, info, des, judge_finish, user_id, create_date, 
-    update_date, title, content
+    update_date, title, content, group_id, group_at_all
   </sql>
 </mapper>

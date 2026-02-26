@@ -5,6 +5,7 @@ import lombok.Data;
 @Data
 public class ActInst {
     private String id;
+    private String actId;
     private String taskId;
     private String executionId;
 }

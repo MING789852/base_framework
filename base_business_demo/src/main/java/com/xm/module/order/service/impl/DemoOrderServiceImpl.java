@@ -15,6 +15,7 @@ import com.xm.module.order.domain.params.OrderExportParams;
 import com.xm.module.order.mapper.DemoOrderMapper;
 import com.xm.module.order.service.DemoOrderService;
 import com.xm.util.auth.UserInfoUtil;
+import com.xm.util.common.CommonUtil;
 import com.xm.util.excel.ExcelUtils;
 import com.xm.util.excel.params.DynamicExcelWithMerge;
 import com.xm.util.id.SnowIdUtil;
@@ -98,9 +99,8 @@ public class DemoOrderServiceImpl implements DemoOrderService {
             }
             List<ColumnProps> mainColumns = params.getMainColumns();
             List<DemoOrder> demoOrders = selectByList(queryData);
-            DynamicExcelWithMerge dynamicExcelWithMerge=new DynamicExcelWithMerge();
-            List<Map<String,Object>> mapList= demoOrders.stream().map(BeanUtil::beanToMap).collect(Collectors.toList());
-            dynamicExcelWithMerge.setMainTableData(mapList);
+            DynamicExcelWithMerge<Object> dynamicExcelWithMerge=new DynamicExcelWithMerge<>();
+            dynamicExcelWithMerge.setMainTableData(CommonUtil.toMapList(demoOrders));
             dynamicExcelWithMerge.setMainColumns(mainColumns);
             Workbook workbook = ExcelUtils.exportDynamicDataWithMergeToExcel(dynamicExcelWithMerge);
             ExcelUtils.exportExcel(workbook,response);

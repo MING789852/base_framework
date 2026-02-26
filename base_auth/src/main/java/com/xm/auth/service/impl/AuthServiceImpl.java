@@ -15,10 +15,7 @@ import com.xm.auth.domain.vo.TokenVo;
 import com.xm.auth.domain.vo.UserVo;
 import com.xm.auth.service.AuthService;
 import com.xm.auth.service.TcUserService;
-import com.xm.util.auth.CaptchaCodeUtil;
-import com.xm.util.auth.LoginSessionUtil;
-import com.xm.util.auth.TokenGenerateUtil;
-import com.xm.util.auth.UserInfoUtil;
+import com.xm.util.auth.*;
 import com.xm.util.auth.enums.TokenKeyEnum;
 import com.xm.util.auth.enums.TokenTypeEnum;
 import com.xm.util.crypto.aes.AESUtil;
@@ -34,19 +31,6 @@ import java.util.Date;
 public class AuthServiceImpl implements AuthService {
 
     private final TcUserService tcUserService;
-
-//    public static void main(String[] args) {
-//        //定义图形验证码的长和宽
-//        LineCaptcha lineCaptcha = CaptchaUtil.createLineCaptcha(120, 40);
-//        lineCaptcha.write("f:/lineCaptcha.png");
-//
-//        //定义图形验证码的长和宽
-//        CircleCaptcha circleCaptcha = CaptchaUtil.createCircleCaptcha(120, 40);
-//        circleCaptcha.write("f:/circleCaptcha.png");
-//
-//        ShearCaptcha shearCaptcha = CaptchaUtil.createShearCaptcha(120, 40);
-//        shearCaptcha.write("f:/shearCaptcha.png");
-//    }
 
 
     @Override
@@ -68,6 +52,11 @@ public class AuthServiceImpl implements AuthService {
         if (StrUtil.isBlank(captchaCode)){
             throw new CommonException("验证码非空");
         }
+        //校验尝试失败次数
+        if (!LoginUtil.allowTry(username)){
+            throw new CommonException(ErrorCode.LoginTryCountExceeded,
+                    StrUtil.format("登录尝试次数过多,请{}分钟后尝试",LoginUtil.LoginTryCountTime));
+        }
         //先判断验证码是否正确
         if (!CaptchaCodeUtil.verifyCaptcha(captchaCode)){
             //刷新验证码
@@ -83,9 +72,13 @@ public class AuthServiceImpl implements AuthService {
         String userPassword=tcUser.getPassword();
         if (userPassword.equals(AESUtil.encrypt(password))){
             LoginSessionUtil.initSession(tcUser);
+            //刷新重试次数
+            LoginUtil.resetTryCount(username);
             return LoginSessionUtil.convertToUserVo(tcUser);
         }else {
             log.error("密码错误");
+            //添加尝试次数
+            LoginUtil.addTryCount(username);
             throw new CommonException(ErrorCode.CaptchaCodeError,"用户或密码不正确");
         }
     }

@@ -8,11 +8,13 @@ import com.xm.auth.domain.vo.UserRoleRelVo;
 import com.xm.auth.service.TcRoleRouterRelService;
 import com.xm.auth.service.TcRoleService;
 import com.xm.auth.service.TcUserRoleRelService;
+import com.xm.core.params.ColumnProps;
 import com.xm.module.core.params.QueryData;
 import com.xm.core.params.Result;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
+import javax.servlet.http.HttpServletResponse;
 import java.util.List;
 
 @RestController
@@ -52,7 +54,7 @@ public class TcRoleController {
     }
 
     @PostMapping("selectByPage")
-    public Result<Page<TcRole>> selectByPage(@RequestBody QueryData queryData){
+    public Result<Page<TcRole>> selectByPage(@RequestBody QueryData<TcRole> queryData){
         return Result.successForData(tcRoleService.selectByPage(queryData));
     }
 
@@ -66,9 +68,19 @@ public class TcRoleController {
         return Result.successForData(tcRoleService.saveOrUpdateData(tcRoleList));
     }
 
-    @PostMapping("selectUserAndDeptPageByRoleId")
-    public Result<Page<RoleRelUserVo>> selectUserAndDeptPageByRoleId(String roleId, @RequestBody QueryData<RoleRelUserVo> queryData){
-        return Result.successForData(tcRoleService.selectUserAndDeptPageByRoleId(roleId, queryData));
+    @PostMapping("selectUserPageByRoleId")
+    public Result<Page<RoleRelUserVo>> selectUserPageByRoleId(String roleId, @RequestBody QueryData<RoleRelUserVo> queryData){
+        return Result.successForData(tcRoleService.selectUserPageByRoleId(roleId, queryData));
+    }
+
+    @PostMapping("exportRoleUsersExcel")
+    public void exportRoleUsersExcel(String roleId, @RequestBody QueryData<RoleRelUserVo> queryData, HttpServletResponse response){
+        tcRoleService.exportRoleUsersExcel(roleId, queryData, response);
+    }
+
+    @GetMapping("getRoleUsersColumnProps")
+    public Result<List<ColumnProps>> getRoleUsersColumnProps(){
+        return Result.successForData(tcRoleService.getRoleUsersColumnProps());
     }
 
     @PostMapping("unRelUserAndRoleAll")

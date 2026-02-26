@@ -9,26 +9,20 @@ import cn.hutool.core.util.StrUtil;
 import com.xm.advice.exception.exception.CommonException;
 import com.xm.configuration.pdf.HtmlToPdfEnv;
 import com.xm.util.bean.SpringBeanUtil;
-import freemarker.template.Configuration;
-import freemarker.template.Template;
+import com.xm.util.template.TemplateUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 
-
 import java.io.File;
-import java.io.FileWriter;
 import java.io.InputStream;
 import java.util.Date;
 
 @Slf4j
 public class HtmlToPdfUtil {
 
-    private final static Configuration configuration;
-
     private final static HtmlToPdfEnv defaultEnv;
 
     static {
-        configuration = SpringBeanUtil.getBeanByName("classPathResourceFreemarkerConfiguration",Configuration.class);
         defaultEnv = SpringBeanUtil.getBeanByClass(HtmlToPdfEnv.class);
         initEnv(defaultEnv);
     }
@@ -70,17 +64,7 @@ public class HtmlToPdfUtil {
             String formatDate = DateUtil.format(now, "yyyyMMdd");
             String pdfTempFilePath=env.getPdfPath() + outPutPdfName+".pdf";
             String htmlTempFilePath=env.getHtmlTempPath() + formatDate + "_" + IdUtil.fastSimpleUUID()+".html";
-            Template template = configuration.getTemplate(ftlName);
-            File htmlTempFile = new File(htmlTempFilePath);
-            if (!htmlTempFile.exists()){
-                boolean newFile = htmlTempFile.createNewFile();
-                if (!newFile){
-                    throw new CommonException("html临时文件创建失败");
-                }
-            }
-            try (FileWriter fileWriter = new FileWriter(htmlTempFile)) {
-                template.process(dataModel,fileWriter);
-            }
+            File htmlTempFile = TemplateUtil.renderFileByFtl(ftlName,htmlTempFilePath,dataModel);
             String wkhtmltopdfCmd = env.getWkHtmlToPdfBinPath();
             ProcessBuilder processBuilder=new ProcessBuilder(wkhtmltopdfCmd,htmlTempFile.getAbsolutePath(),pdfTempFilePath);
             Process process = processBuilder.start();

@@ -2,15 +2,11 @@ package com.xm.flowable.service;
 
 
 import com.xm.auth.domain.entity.TcUser;
-import com.xm.flowable.domain.vo.ProcessInstanceVo;
-import com.xm.flowable.domain.vo.TaskInfoVo;
-import com.xm.flowable.domain.dto.ExecuteTask;
-import com.xm.flowable.domain.dto.FlowableSimpleBpmnDeployment;
-import com.xm.flowable.domain.dto.StartProcessInstance;
-import com.xm.flowable.enums.TaskStatusEnum;
+import com.xm.flowable.domain.dto.*;
+import com.xm.flowable.domain.dto.ExecuteProcessInstance;
+import com.xm.flowable.domain.vo.*;
 import org.flowable.engine.runtime.ProcessInstance;
 
-import javax.servlet.http.HttpServletResponse;
 import java.util.List;
 import java.util.Map;
 
@@ -31,6 +27,12 @@ public interface FlowableService {
      */
     boolean existProcessInstanceByProcessDefinitionKey(String processDefinitionKey);
 
+    /**
+     * 获取流程实例信息(区分运行中和已完成)
+     */
+    ProcessInstanceVo getProcessInstanceVoById(String processInstanceId);
+
+    TaskInfoVo getTaskInfoVoById(String processInstanceId,String taskId);
 
     /**
      * 启动流程
@@ -38,11 +40,9 @@ public interface FlowableService {
     ProcessInstance startProcess(StartProcessInstance startProcessInstance);
 
     /**
-     * 查看所有待办任务和已办任务（展示流程图节点）
+     * 查看所有待办任务和已办任务和回滚（展示流程图节点）
      */
     List<TaskInfoVo> processAllTask(String processInstanceId);
-
-    List<TaskInfoVo> processAllTaskWithoutData(String processInstanceId);
 
     /**
      * 查看当前还存在待办任务（不携带审批流数据）
@@ -106,14 +106,25 @@ public interface FlowableService {
      */
     Object getExpressionValue(Map<String, Object> variables, String expression);
 
-    /**
-     * 转办
-     */
-    void transfer(String taskId, String assignee);
+
+    FlowableExecuteVo getExecuteInfoByProcessId(String processInstanceId);
 
 
-    /**
-     * 查看流程图
-     */
-    boolean viewProcessImageByProcessId(String processInstanceId, HttpServletResponse response);
+    String createTestProcess(CreateTestProcessInstance createTestProcessInstance);
+
+    String executeProcess(ExecuteProcessInstance executeProcessInstance);
+
+    List<ProcessVariableVo> getProcessVariableList(String processInstanceId);
+
+    List<TaskVariableVo> getTaskVariableList(String processInstanceId);
+
+
+    String saveOrUpdateProcessVariable(String processInstanceId,VariableData variableData);
+
+    String saveOrUpdateTaskVariable(String processInstanceId,String taskId, VariableData variableData);
+
+    String deleteProcessVariable(String processInstanceId,VariableData variableData);
+
+    String deleteTaskVariable(String processInstanceId,String taskId, VariableData variableData);
+
 }

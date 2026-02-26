@@ -55,7 +55,7 @@ export const getLoginByToken = (token?: object) => {
   return http.get<any,UserResult>("/auth/loginByToken?token=" + token);
 };
 
-export const getLoginByAuthCode = (authCode: string,configKey: string) => {
+export const getLoginByDDAuthCode = (authCode: string, configKey: string) => {
   if (configKey===undefined||configKey===null){
     return http.get<any,UserResult>("/ddUser/loginByAuthCode?authCode=" + authCode);
   }else {

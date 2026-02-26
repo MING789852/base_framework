@@ -1,10 +1,11 @@
 <script setup lang="ts">
 
-import {onMounted, ref} from "vue";
+import {computed, ref} from "vue";
 import ColumnTypeEnum from "@/enums/ColumnTypeEnum";
 import CommonTableColumn from "@/components/table/commonTableColumn.vue";
-import {isNullOrUnDef} from "@pureadmin/utils";
+import {cloneDeep, isNullOrUnDef} from "@pureadmin/utils";
 import common from '@/utils/common'
+import {message} from "@/utils/message";
 
 interface UploadFile {
   fileId:string,
@@ -14,31 +15,100 @@ interface UploadFile {
   createDate?:Date
 }
 interface DyFileProp {
-  canUploadFn?: ()=>boolean,
-  canDeleteFn?: (row:any,index:number)=>boolean
+  fileAction?: FileAction
 }
 
-const props = withDefaults(defineProps<DyFileProp>(),{
-  canDeleteFn: undefined,
-  canUploadFn: undefined
-})
-const tableData = defineModel('tableDataProp',{type:Array<UploadFile>,required:false})
+const props = withDefaults(defineProps<DyFileProp>(),{})
+const tableDataProp = defineModel('tableDataProp',{type:Array<UploadFile>,required:false})
 const uploadMap = defineModel('uploadMap',{type:Map<String,File>,required:true})
 
 const dictMapping = ref({})
-onMounted(()=>{
-  if (isNullOrUnDef(tableData.value)){
-    tableData.value = []
+const tableData = computed({
+  get(){
+    if (isNullOrUnDef(tableDataProp.value)){
+      tableDataProp.value = []
+    }
+    return tableDataProp.value
+  },
+  set(val){
+    tableDataProp.value = val
   }
 })
-
 const columns=ref<ColumnDefine[]>([
   {label: "文件名称", prop: "fileName", query: false, type: ColumnTypeEnum.COMMON},
   {label: "上传人员",prop: "createUser",query: false, type: ColumnTypeEnum.COMMON},
   {label: "上传日期",prop: "createDate",query: false, type: ColumnTypeEnum.COMMON}
 ])
 const tempFilePrefix = common.getTempFilePrefix()
-const uploadFn = () => {
+
+const fileViewActionType = () => {
+  let fileActionEvent:FileActionEvent = {
+    data: cloneDeep(tableData.value),
+    rowIndex: null,
+    fileIndex: null,
+    fileTotalNum: null,
+    propName: null,
+    fileName: null
+  }
+  return props.fileAction?.fileViewActionTypeFn?.(fileActionEvent)??'PreviewFileComponent'
+}
+const canUploadFn = () => {
+  let fileActionEvent:FileActionEvent = {
+    data: cloneDeep(tableData.value),
+    rowIndex: null,
+    fileIndex: null,
+    fileTotalNum: null,
+    propName: null,
+    fileName: null
+  }
+  return props.fileAction?.canUploadFileFn?.(fileActionEvent)?? true
+}
+const canDeleteFn = (row:any,index:number) => {
+  let fileActionEvent:FileActionEvent = {
+    data: row,
+    rowIndex: index,
+    propName: null,
+    fileIndex: null,
+    fileTotalNum: null,
+    fileName: null
+  }
+  return props.fileAction?.canDeleteFileFn?.(fileActionEvent)?? true
+}
+const canViewFile = (row:any,index:number) => {
+  let fileActionEvent:FileActionEvent = {
+    data: row,
+    rowIndex: index,
+    propName: null,
+    fileIndex: null,
+    fileTotalNum: null,
+    fileName: null
+  }
+  return props.fileAction?.canViewFileFn?.(fileActionEvent)?? true
+}
+const canDownloadFn = (row:any,index:number) => {
+  let fileActionEvent:FileActionEvent = {
+    data: row,
+    rowIndex: index,
+    propName: null,
+    fileIndex: null,
+    fileTotalNum: null,
+    fileName: null
+  }
+  return props.fileAction?.canDownloadFileFn?.(fileActionEvent)?? true
+}
+const uploadFn = async () => {
+  let fileActionEvent:FileActionEvent = {
+    data: cloneDeep(tableData.value),
+    rowIndex: null,
+    fileIndex: null,
+    fileTotalNum: null,
+    propName: null,
+    fileName: null
+  }
+  let result=await common.getReturnDataPromiseLike(props.fileAction?.beforeUploadFileFn?.(fileActionEvent)??true)
+  if (!result){
+    return
+  }
   common.uploadFile((e:any)=>{
     let fileList:File[] = e.target.files
     let tempFileId = tempFilePrefix + common.generateUUID()
@@ -50,8 +120,20 @@ const uploadFn = () => {
     uploadMap.value.set(tempFileId,fileList[0])
   },false)
 }
-const previewFn = (row:UploadFile) => {
-  common.viewFileById(row.fileId,row.fileName)
+const previewFn = (row:UploadFile, index:number) => {
+  if (!canViewFile(row, index)){
+    return
+  }
+  if (fileViewActionType() === 'PreviewFileComponent'){
+    common.viewFileById(row.fileId,row.fileName)
+  }else {
+    let tempFilePrefix = common.getTempFilePrefix()
+    if (row.fileId.startsWith(tempFilePrefix)) {
+      return message('临时文件无法预览,请保存后操作', {type: 'error'})
+    }
+    let url = common.getViewUrlByFileId(row.fileId);
+    common.openUrl(url)
+  }
 }
 const downloadFn = (row:UploadFile) => {
   let fileId = row.fileId
@@ -71,20 +153,6 @@ const deleteFn = (row,index) => {
     uploadMap.value.delete(fileId)
   }
 }
-const canUploadFn = () => {
-  if (isNullOrUnDef(props.canUploadFn)){
-    return true
-  }else {
-    return props.canUploadFn()
-  }
-}
-const canDeleteFn = (row:any,index:number) => {
-  if (isNullOrUnDef(props.canDeleteFn)){
-    return true
-  }else {
-    return props.canDeleteFn(row,index)
-  }
-}
 </script>
 
 <template>
@@ -100,9 +168,9 @@ const canDeleteFn = (row:any,index:number) => {
       <el-table-column header-align="center" align="center" label="操作" width="150">
         <template #default="scope">
           <div class="flex gap-2" style="font-size: 12px">
-            <el-link :underline="false" type="info" class="text-nowrap" @click="previewFn(scope.row)">预览</el-link>
-            <el-link :underline="false" type="primary" class="text-nowrap" @click="downloadFn(scope.row)">下载</el-link>
-            <el-link v-if="canDeleteFn(scope.row,scope.$index)" :underline="false" type="danger" class="text-nowrap" @click="deleteFn(scope.row,scope.$index)">删除</el-link>
+            <el-link v-if="canViewFile(scope.row,scope.$index)" :underline="'never'" type="info" class="text-nowrap" @click="previewFn(scope.row,scope.$index)">预览</el-link>
+            <el-link v-if="canDownloadFn(scope.row,scope.$index)" :underline="'never'" type="primary" class="text-nowrap" @click="downloadFn(scope.row)">下载</el-link>
+            <el-link v-if="canDeleteFn(scope.row,scope.$index)" :underline="'never'" type="danger" class="text-nowrap" @click="deleteFn(scope.row,scope.$index)">删除</el-link>
           </div>
         </template>
       </el-table-column>

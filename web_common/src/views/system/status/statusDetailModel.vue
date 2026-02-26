@@ -59,14 +59,20 @@ const saveOrUpdate = (data) => {
     {label: "表单模型", prop: "formMainModelId",type: QueryTypeEnum.OPTION}
   ]
   let defaultData = ref(data)
-  common.openInputDialog(columns,dictMapping,defaultData,(result)=>{
-    let data = {...result.data,...{statusMainModelId:props.parentRow.id}}
-    common.handleRequestApi(statusDetailModelApi.saveOrUpdateData([data])).then(res=>{
-      message(res.msg,{type:'success'})
-      commonTableRef.value.getData()
-      result.done()
-    })
-  })
+  let params:OpenInputDialogDefine = {
+    columns:columns,
+    dictMapping:dictMapping,
+    defaultValue:defaultData,
+    callBack: (result) => {
+      let data = {...result.data,...{statusMainModelId:props.parentRow.id}}
+      common.handleRequestApi(statusDetailModelApi.saveOrUpdateData([data])).then(res=>{
+        message(res.msg,{type:'success'})
+        commonTableRef.value.getData()
+        result.done()
+      })
+    }
+  }
+  common.openInputDialog(params)
 }
 tableFn.addFn = () => {
   saveOrUpdate({})

@@ -55,25 +55,31 @@ const selectLabel = async () => {
   const dictMapping = {
     "labelSelectList":res.data
   }
-  common.openInputDialog(columns,dictMapping,defaultData,(result)=>{
-    let labelSelectList:string[]=result.data.labelSelectList
-    if(labelSelectList.length===0){
-      return message('请选中后操作',{type:'error'})
-    }
-    //校验标签是否存在
-    for (let i=0;i<labelList.value.length;i++){
-      if (labelSelectList.includes(labelList.value[i].labelName)){
-        return message(labelList.value[i].labelName+' 标签已存在',{type:'error'})
+  let params:OpenInputDialogDefine = {
+    columns: columns,
+    dictMapping: dictMapping,
+    defaultValue: defaultData,
+    callBack: (result) => {
+      let labelSelectList:string[]=result.data.labelSelectList
+      if(labelSelectList.length===0){
+        return message('请选中后操作',{type:'error'})
       }
-    }
-    let labelSelectObjList=labelSelectList.map((value)=>{
-      return {
-        "labelName": value
+      //校验标签是否存在
+      for (let i=0;i<labelList.value.length;i++){
+        if (labelSelectList.includes(labelList.value[i].labelName)){
+          return message(labelList.value[i].labelName+' 标签已存在',{type:'error'})
+        }
       }
-    })
-    labelList.value.push(...labelSelectObjList)
-    result.done()
-  })
+      let labelSelectObjList=labelSelectList.map((value)=>{
+        return {
+          "labelName": value
+        }
+      })
+      labelList.value.push(...labelSelectObjList)
+      result.done()
+    }
+  }
+  common.openInputDialog(params)
 }
 </script>
 

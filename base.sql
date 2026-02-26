@@ -1,24 +1,29 @@
-
 create table tc_business_approving
 (
     id            varchar(32)                     not null comment '主键'
         primary key,
-    business_id   varchar(32)                     not null comment '业务id',
+    business_id   varchar(32)                     not null comment '业务id关联tc_business',
+    version       varchar(50) default ''          not null comment '版本',
     business_type varchar(50) default ''          not null comment '业务类型',
+    business_no   varchar(50) default ''          not null comment '业务编码',
     user_id       varchar(32)                     not null comment '关联tc_user',
     user_name     varchar(32)                     not null comment '关联tc_user',
-    create_date   date        default (curdate()) null comment '创建日期'
+    judge_enable  int         default 1           not null comment '是否可用',
+    create_user   varchar(50)                     null comment '创建人员',
+    create_date   date        default (curdate()) null comment '创建日期',
+    update_user   varchar(50)                     null comment '修改人员',
+    update_date   date                            null comment '修改日期'
 )
     comment '正在审批业务';
 
 create index idx_business_id
     on tc_business_approving (business_id);
 
-create index idx_business_type
-    on tc_business_approving (business_type);
+create index idx_business_user
+    on tc_business_approving (business_type, version, user_id);
 
-create index idx_user_id
-    on tc_business_approving (user_id);
+create index idx_judge_enable
+    on tc_business_approving (judge_enable);
 
 
 create table tc_config
@@ -197,7 +202,7 @@ create table tc_file_chunk
     create_date  date         default (curdate()) null comment '创建日期',
     constraint uidx_md5_chunk_number
         unique (md5, chunk_number)
-)comment '文件分块上传记录表(用于断点续传)';
+) comment '文件分块上传记录表(用于断点续传)';
 
 create index idx_md5
     on tc_file_chunk (md5);
@@ -213,20 +218,22 @@ create table tc_flowable_elements
     element_type            varchar(100)   not null comment '节点类型',
     element_x               decimal(10, 2) null comment '节点x坐标',
     element_y               decimal(10, 2) null comment '节点y坐标',
-    element_name            varchar(100)   null comment '节点名称',
     text_x                  decimal(10, 2) null comment '节点文本x坐标',
     text_y                  decimal(10, 2) null comment '节点文本y坐标',
     assignee                varchar(100)   null comment '节点人员key',
     assignee_name           varchar(100)   null comment '节点人员名称',
     source_node_Id          varchar(100)   null comment '连线源节点id',
     target_node_Id          varchar(100)   null comment '连线目标节点id',
-    content1                varchar(100)   null comment '预留字段1',
-    content2                varchar(100)   null comment '预留字段2',
+    content1                text           null comment '预留字段1',
+    content2                text           null comment '预留字段2',
     content3                varchar(100)   null comment '预留字段3',
     content4                varchar(100)   null comment '预留字段4',
+    element_name            varchar(100)   null comment '节点名称',
+    content5                text           null comment '预留字段5',
+    content6                text           null comment '预留字段6',
     primary key (process_definition_key, element_id)
-)
-    comment '流程图节点';
+) comment '流程图节点';
+
 
 create table tc_flowable_model
 (
@@ -365,25 +372,28 @@ create table tc_form_main_model
 )
     comment '表单主表模型';
 
+
 create table tc_msg
 (
     id            varchar(50)                      not null comment '主键'
         primary key,
-    business_type varchar(50)  default ''          not null comment '业务类型',
-    business_key  varchar(50)  default ''          not null comment '业务编码',
-    type          varchar(32)  default '0'         not null comment '0、卡片消息 1、待办消息',
+    business_type varchar(100) default ''          not null comment '业务类型',
+    business_key  varchar(100) default ''          not null comment '业务编码',
+    type          varchar(50)  default '0'         not null comment '消息类型',
     info          text                             null comment '额外信息',
     des           varchar(255) default ''          null comment '描述',
     judge_finish  tinyint(1)   default 0           not null,
-    user_id       varchar(50)  default ''          not null comment '用户id',
+    user_id       varchar(100)                     null comment '用户',
     create_date   datetime     default (curdate()) null comment '创建日期',
     update_date   datetime                         null comment '更新日期',
     title         text                             null comment '标题',
     content       text                             null comment '内容',
+    group_id      varchar(100)                     null comment '群组id',
+    group_at_all  varchar(3)                       null comment '群组@所有人',
     constraint uidx_msg
         unique (business_type, business_key, type, user_id)
 )
-    comment '钉钉消息表';
+    comment '消息表';
 
 create index idx_create_time
     on tc_msg (create_date desc);
@@ -497,8 +507,6 @@ create table tc_router
     judge_public tinyint(1) default 0           not null comment '是否公开',
     fullscreen   tinyint(1) default 0           null comment '是否全屏展示',
     constraint name
-        unique (name),
-    constraint uidx_router_name
         unique (name)
 )
     comment '路由';
@@ -636,14 +644,14 @@ create table tc_user
     create_date     date         default (curdate()) null comment '创建日期',
     update_user     varchar(50)                      null comment '修改人员',
     update_date     date                             null comment '修改日期',
-    job_number      varchar(50)  default ''          not null comment '工号',
+    job_number      varchar(50)  default ''          null comment '工号',
     user_type       int          default 0           not null comment '用户类型 0、系统创建  1、微信小程序获取',
     email           varchar(100) default ''          not null comment '邮箱地址',
     phone_number    varchar(50)  default ''          not null comment '手机号',
     manager_userid  varchar(32)                      null comment '对应管理人（领导）',
     last_login_time datetime                         null comment '最后一次登录时间',
-    constraint username
-        unique (username)
+    constraint uidx_username_jobnumber
+        unique (username, job_number)
 )
     comment '用户';
 
@@ -689,4 +697,5 @@ create index idx_role_id
 
 create index idx_user_id
     on tc_user_role_rel (user_id);
+
 

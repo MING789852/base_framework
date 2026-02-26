@@ -1,77 +1,73 @@
 <template>
-  <div class="parent">
-    <common-table ref="commonTableRef"  :columns="columns"
-                  :queryColumns="queryColumns" :queryInHeader="false" :dictList="dictMapping"
-                  :api="systemUserApi" :tableFn="tableFn" :table-button="tableButton">
-      <template #button_end>
-        <el-button class="font-bold" size="small" type="primary" @click="changeEnableFn(0)">禁用</el-button>
-        <el-button class="font-bold" size="small" type="primary" @click="changeEnableFn(1)">启用</el-button>
-
-        <el-button v-if="common.authActionCode('currentLoginUser')" class="font-bold" size="small" type="primary" @click="currentLoginUser">当前登录用户</el-button>
-        <el-button v-if="authButton()" class="font-bold" size="small" type="primary" @click="createDDUser">创建钉钉用户（id）</el-button>
-        <el-button v-if="authButton()" class="font-bold" size="small" type="primary" @click="createDDUserByName">创建钉钉用户(姓名)</el-button>
-        <el-button v-if="authButton()" class="font-bold" size="small" type="primary" @click="createDDUserByWorkNum">创建钉钉用户(工号)</el-button>
-        <el-button v-if="authButton()" class="font-bold" size="small" type="primary" @click="createDDUserWithLeader">创建钉钉用户(带出领导)</el-button>
-      </template>
-      <template #column>
-        <el-table-column header-align="center" align="center" label="操作" >
-          <template #default="scope">
-            <a style="cursor: pointer;color: #409EFF" @click="assignRoles(scope.row)">分配角色</a>
+  <common-table ref="commonTableRef"  :columns="columns"
+                :queryColumns="queryColumns" :queryInHeader="false" :dictList="dictMapping"
+                :api="systemUserApi" :tableFn="tableFn" :table-button="tableButton">
+    <template #button_end>
+      <el-button class="font-bold" size="small" type="primary" @click="changeEnableFn(0)">禁用</el-button>
+      <el-button class="font-bold" size="small" type="primary" @click="changeEnableFn(1)">启用</el-button>
+      <el-button v-if="common.authActionCode('currentLoginUser')" class="font-bold" size="small" type="primary" @click="currentLoginUser">当前登录用户</el-button>
+      <el-button v-if="common.authActionCode('resetLoginTry')" class="font-bold" size="small" type="primary" @click="resetLoginTry">重置登录次数</el-button>
+    </template>
+    <template #column>
+      <el-table-column header-align="center" align="center" label="操作" >
+        <template #default="scope">
+          <a style="cursor: pointer;color: #409EFF" @click="assignRoles(scope.row)">分配角色</a>
+        </template>
+      </el-table-column>
+    </template>
+    <template #dialog>
+      <el-dialog v-model="loginDetailFlag" destroy-on-close append-to-body fullscreen>
+        <common-table ref="loginDetailCommonTableRef"  :columns="loginDetailColumns" height="76vh" :dictList="dictMapping" :show-page="false"
+                      :queryInHeader="false" :tableFn="loginDetailTableFn" :table-button="loginDetailTableButton">
+          <template #header_right>
+            <div class="text-[20px] text-red-600">
+              总数: {{loginUserCount}}
+            </div>
           </template>
-        </el-table-column>
-      </template>
-      <template #dialog>
-        <el-dialog v-model="loginDetailFlag" destroy-on-close append-to-body fullscreen>
-          <common-table ref="loginDetailCommonTableRef"  :columns="loginDetailColumns" height="76vh" :dictList="dictMapping" :show-page="false"
-                        :queryInHeader="false" :tableFn="loginDetailTableFn" :table-button="loginDetailTableButton">
-            <template #column>
-              <el-table-column header-align="center" align="center" label="操作" >
-                <template #default="scope">
-                  <div class="flex gap-2 w-full justify-center">
-                    <el-link :underline="false" type="primary" style="font-size: 12px" class="text-nowrap" @click="viewRequestAction(scope.row)">操作历史</el-link>
-                    <el-link :underline="false" type="danger" style="font-size: 12px" class="text-nowrap" @click="logout(scope.row)">强制退出</el-link>
-                  </div>
+          <template #column>
+            <el-table-column header-align="center" align="center" label="操作" >
+              <template #default="scope">
+                <div class="flex gap-2 w-full justify-center">
+                  <el-link :underline="'never'" type="primary" style="font-size: 12px" class="text-nowrap" @click="viewRequestAction(scope.row)">操作历史</el-link>
+                  <el-link :underline="'never'" type="danger" style="font-size: 12px" class="text-nowrap" @click="logout(scope.row)">强制退出</el-link>
+                </div>
+              </template>
+            </el-table-column>
+          </template>
+          <template #dialog>
+            <el-drawer v-model="requestActionFlag" size="50%" append-to-body>
+              <template #header>
+                <div class="flex justify-between items-center">
+                  <div style="font-size: 18px;font-weight: bolder;color: black">操作历史</div>
+                </div>
+              </template>
+              <el-table
+                  style="font-size: 12px;"
+                  element-loading-text="加载中..."
+                  :data="requestActionData"
+                  :border="false">
+                <template v-for="item in requestActionColumns" :key="item.prop">
+                  <CommonTableColumn  :item="item" :dict-list="dictMapping"/>
                 </template>
-              </el-table-column>
-            </template>
-            <template #dialog>
-              <el-drawer v-model="requestActionFlag" size="50%" append-to-body>
-                <template #header>
-                  <div class="flex justify-between items-center">
-                    <div style="font-size: 18px;font-weight: bolder;color: black">操作历史</div>
-                  </div>
-                </template>
-                <el-table
-                    style="font-size: 12px;"
-                    element-loading-text="加载中..."
-                    :data="requestActionData"
-                    :border="false">
-                  <template v-for="item in requestActionColumns" :key="item.prop">
-                    <CommonTableColumn  :item="item" :dict-list="dictMapping"/>
-                  </template>
-                </el-table>
-              </el-drawer>
-            </template>
-          </common-table>
-        </el-dialog>
-      </template>
-    </common-table>
-  </div>
+              </el-table>
+            </el-drawer>
+          </template>
+        </common-table>
+      </el-dialog>
+    </template>
+  </common-table>
 </template>
 
 <script setup lang="tsx">
-import {ref, onMounted} from "vue";
+import {ref, useTemplateRef} from "vue";
 import {message} from "@/utils/message";
 import {isNullOrUnDef} from "@pureadmin/utils";
-import {addDialog, } from "@/components/ReDialog";
 import common from '@/utils/common'
 import systemUserApi from "@/api/systemUserApi";
 import systemRoleApi from "@/api/systemRoleApi";
-import {getUserInfo} from "@/utils/auth";
 import ColumnTypeEnum from "@/enums/ColumnTypeEnum";
 import QueryTypeEnum from "@/enums/QueryTypeEnum";
 import QueryConditionEnum from "@/enums/QueryConditionEnum";
-import DetailForm from "@/components/detailForm/detailForm.vue";
 import commonTable from "@/components/table/commonTable.vue";
 import TableFnClass from "@/class/TableFnClass";
 import CommonTableColumn from "@/components/table/commonTableColumn.vue";
@@ -86,11 +82,11 @@ const tableButton = ref<CommonTableButton>({
   addFn: true,
   saveFn: true,
   refreshFn: true,
-  deleteFn: false,
+  deleteFn: true,
   initQueryFn: false,
   exportExcelFn: false
 })
-let commonTableRef = ref<CommonTableType>(null)
+let commonTableRef = useTemplateRef<InstanceType<typeof commonTable>>('commonTableRef')
 const columns = ref<Array<ColumnDefine>>([
   {prop: "username", label: "账号", width: 150, type: ColumnTypeEnum.COMMON, query: true, queryType: QueryTypeEnum.INPUT, queryCondition: QueryConditionEnum.LIKE},
   {prop: "nickName", label: "姓名", type: ColumnTypeEnum.EDIT_INPUT, query: true, queryType: QueryTypeEnum.INPUT, queryCondition: QueryConditionEnum.LIKE},
@@ -122,22 +118,17 @@ tableFn.initFn = async () => {
 }
 
 tableFn.addFn = () => {
-  addDialog({
-    width: "40%",
-    title: "新增",
-    props: {
-      columns: detailColumns,
-      propData: detailData,
-      dictList: dictMapping
-    },
-    contentRenderer: () => DetailForm,
-    beforeSure(done, { options, index }) {
-      let data = [options.props.propData]
+  let params:OpenInputDialogDefine = {
+    columns:detailColumns,
+    dictMapping: dictMapping,
+    defaultValue:detailData,
+    callBack: (result) => {
+      let data = [result.data]
       systemUserApi.saveOrUpdateData(data).then((res:any)=>{
         if (res.code === 200) {
           message('新增成功',{type:'success'})
           commonTableRef.value.getData()
-          done()
+          result.done()
         } else {
           message(res.msg,{type:'error'})
         }
@@ -145,7 +136,8 @@ tableFn.addFn = () => {
         message(e,{type:'error'})
       })
     }
-  })
+  }
+  common.openInputDialog(params)
 }
 
 
@@ -168,6 +160,7 @@ const loginDetailColumns = ref<Array<ColumnDefine>>([
     ...columns.value
 ]);
 const loginDetailFlag = ref(false)
+const loginUserCount = ref(0)
 
 loginDetailTableFn.initFn = ()=>{
   loginDetailCommonTableRef.value.getData()
@@ -175,11 +168,22 @@ loginDetailTableFn.initFn = ()=>{
 loginDetailTableFn.getData = ()=>{
   common.handleRequestApi(systemUserApi.getAllLoginUser()).then(res=>{
     loginDetailCommonTableRef.value.tableData = res.data
+    loginUserCount.value = res.data.length
   })
 }
 
 const currentLoginUser = ()=>{
   loginDetailFlag.value = true
+}
+
+const resetLoginTry = () => {
+  let list = commonTableRef.value.selectTableData
+  if (list.length === 0){
+    return message('请选择数据后操作',{type:'error'})
+  }
+  common.handleRequestApi(systemUserApi.resetLoginTry(list)).then(()=>{
+    message('操作成功',{type: 'success'})
+  })
 }
 
 const requestActionData = ref([])
@@ -195,7 +199,7 @@ const viewRequestAction = (row)=>{
   })
 }
 const logout = (row)=>{
-  common.handleRequestApi(systemUserApi.removeLoginUser([row])).then(res=>{
+  common.handleRequestApi(systemUserApi.removeLoginUser([row])).then(()=>{
     message('操作成功',{type: 'success'})
     loginDetailCommonTableRef.value.getData()
   })
@@ -228,21 +232,15 @@ const assignRoles = async (row) => {
   assignRolesDict['roleList'] = {}
   if (!isNullOrUnDef(roleList)){
     roleList.forEach((item)=>{
-      // assignRolesDict['roleList'][item.roleName] = item.id
       assignRolesDict['roleList'][item.id] = item.roleName
     })
   }
-  addDialog({
-    width: "40%",
-    title: "分配角色",
-    props: {
-      columns: assignRolesColumns,
-      propData: assignRolesData,
-      dictList: assignRolesDict
-    },
-    contentRenderer: () => DetailForm,
-    beforeSure(done, { options, index }) {
-      let propData:any = options.props.propData
+  let params:OpenInputDialogDefine = {
+    columns:assignRolesColumns,
+    dictMapping: assignRolesDict,
+    defaultValue:assignRolesData,
+    callBack: (result) => {
+      let propData:any = result.data
       if (isNullOrUnDef(propData.roleList)){
         propData.roleList = []
       }
@@ -254,7 +252,7 @@ const assignRoles = async (row) => {
         if (res.code === 200) {
           message('分配成功',{type:'success'})
           commonTableRef.value.getData()
-          done()
+          result.done()
         } else {
           message(res.msg,{type:'error'})
         }
@@ -262,7 +260,8 @@ const assignRoles = async (row) => {
         message(e,{type:'error'})
       })
     }
-  })
+  }
+  common.openInputDialog(params)
 }
 
 const detailData = ref({})
@@ -281,146 +280,12 @@ const changeEnableFn = (judgeEnable) => {
       judgeEnable: judgeEnable,
       tcUserList: commonTableRef.value.selectTableData
     }
-    common.handleRequestApi(systemUserApi.changeEnable(data)).then((res)=>{
+    common.handleRequestApi(systemUserApi.changeEnable(data)).then(()=>{
       commonTableRef.value.getData()
       message('操作成功', { type: 'success' })
     })
   }
 }
-
-const ddData = ref({})
-const ddColumns:Array<DetailColumnDefine> = [
-  {prop: "inputValue", label: "输入值", type: QueryTypeEnum.INPUT, placeholder: ''}
-];
-const authButton = () => {
-  let userInfo = getUserInfo()
-  if (!isNullOrUnDef(userInfo)&&!isNullOrUnDef(userInfo.username)) {
-    if (userInfo.username === 'admin') {
-      return  true
-    }
-  }
-
-  return false
-}
-const createDDUserByName = () => {
-  addDialog({
-    width: "40%",
-    title: "输入钉钉用户姓名",
-    props: {
-      columns: ddColumns,
-      propData: ddData,
-      dictList: dictMapping
-    },
-    contentRenderer: () => DetailForm,
-    beforeSure(done, { options, index }) {
-      let inputValue = options.props.propData.inputValue
-      if (isNullOrUnDef(inputValue)){
-        return message('输入值不能为空',{type:'error'})
-      }
-      systemUserApi.createTcUserByDingDingName(inputValue).then((res:any)=>{
-        if (res.code === 200) {
-          message('新增成功',{type:'success'})
-          commonTableRef.value.getData()
-          done()
-        } else {
-          message(res.msg,{type:'error'})
-        }
-      }).catch(e => {
-        message(e,{type:'error'})
-      })
-    }
-  })
-}
-
-const createDDUserByWorkNum = () => {
-  addDialog({
-    width: "40%",
-    title: "输入钉钉用户工号",
-    props: {
-      columns: ddColumns,
-      propData: ddData,
-      dictList: dictMapping
-    },
-    contentRenderer: () => DetailForm,
-    beforeSure(done, { options, index }) {
-      let inputValue = options.props.propData.inputValue
-      if (isNullOrUnDef(inputValue)){
-        return message('输入值不能为空',{type:'error'})
-      }
-      systemUserApi.createTcUserByDingDingWorkNum(inputValue).then((res:any)=>{
-        if (res.code === 200) {
-          message('新增成功',{type:'success'})
-          commonTableRef.value.getData()
-          done()
-        } else {
-          message(res.msg,{type:'error'})
-        }
-      }).catch(e => {
-        message(e,{type:'error'})
-      })
-    }
-  })
-}
-const createDDUser = () => {
-  addDialog({
-    width: "40%",
-    title: "新增",
-    props: {
-      columns: ddColumns,
-      propData: ddData,
-      dictList: dictMapping
-    },
-    contentRenderer: () => DetailForm,
-    beforeSure(done, { options, index }) {
-      let inputValue = options.props.propData.inputValue
-      if (isNullOrUnDef(inputValue)){
-        return message('输入值不能为空',{type:'error'})
-      }
-      systemUserApi.createTcUserByDingDingUserId(inputValue).then((res:any)=>{
-        if (res.code === 200) {
-          message('新增成功',{type:'success'})
-          commonTableRef.value.getData()
-          done()
-        } else {
-          message(res.msg,{type:'error'})
-        }
-      }).catch(e => {
-        message(e,{type:'error'})
-      })
-    }
-  })
-}
-
-const createDDUserWithLeader = () => {
-  addDialog({
-    width: "40%",
-    title: "输入钉钉用户id",
-    props: {
-      columns: ddColumns,
-      propData: ddData,
-      dictList: dictMapping
-    },
-    contentRenderer: () => DetailForm,
-    beforeSure(done, { options, index }) {
-      let inputValue = options.props.propData.inputValue
-      if (isNullOrUnDef(inputValue)){
-        return message('输入值不能为空',{type:'error'})
-      }
-      systemUserApi.createTcUserWithLeaderByDingDingUserId(inputValue).then((res:any)=>{
-        if (res.code === 200) {
-          message('新增成功',{type:'success'})
-          commonTableRef.value.getData()
-          done()
-        } else {
-          message(res.msg,{type:'error'})
-        }
-      }).catch(e => {
-        message(e,{type:'error'})
-      })
-    }
-  })
-}
-
 </script>
 
 <style scoped lang="scss">

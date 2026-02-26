@@ -17,8 +17,10 @@ import org.springframework.web.multipart.MultipartFile;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 public class FileOptionUtil {
 
@@ -56,6 +58,15 @@ public class FileOptionUtil {
         }
     }
 
+    public static Map<String, UploadFileWithStream> convertUploadFileMap(Map<String, MultipartFile> fileMap) {
+        if (fileMap == null) {
+            fileMap = new HashMap<>();
+        }
+        return fileMap.entrySet().stream()
+                .collect(Collectors.toMap(Map.Entry::getKey,
+                        item -> FileOptionUtil.convertUploadFileWithStreamByMultipartFile(item.getValue())));
+    }
+
     public static TcFile uploadByUploadFileWithStream(UploadFileWithStream uploadFileWithStream) {
         return fileOption.uploadByUploadFileWithStream(uploadFileWithStream);
     }
@@ -68,13 +79,21 @@ public class FileOptionUtil {
         return fileOption.readFileByteArrayById(id);
     }
 
-    public static List<TcFileWithInputStream> readFileInputStreamByIdList(List<String> idList){
+    public static List<TcFileWithInputStream> readFileInputStreamByIdList(List<String> idList) {
         return fileOption.readFileInputStreamByIdList(idList);
     }
 
     public static void viewFile(String id, HttpServletResponse response) {
         try {
             fileOption.viewFile(id, response);
+        } catch (Exception e) {
+            throw new CommonException(e.getMessage());
+        }
+    }
+
+    public static void viewFileWithCacheControl(String id, HttpServletResponse response) {
+        try {
+            fileOption.viewFileWithCacheControl(id, response);
         } catch (Exception e) {
             throw new CommonException(e.getMessage());
         }
@@ -109,19 +128,19 @@ public class FileOptionUtil {
         }
     }
 
-    public static CreateChunkUploadResult createChunkUpload(CreateChunkUploadParams params){
+    public static CreateChunkUploadResult createChunkUpload(CreateChunkUploadParams params) {
         return fileOption.createChunkUpload(params);
     }
 
-    public static UploadChunkResult uploadChunk(UploadChunkParams params,byte[] bytes){
-        return fileOption.uploadChunk(params,bytes);
+    public static UploadChunkResult uploadChunk(UploadChunkParams params, byte[] bytes) {
+        return fileOption.uploadChunk(params, bytes);
     }
 
-    public static TcFile mergeChunk(MergeChunkParams params){
+    public static TcFile mergeChunk(MergeChunkParams params) {
         return fileOption.mergeChunk(params);
     }
 
-    public static TcFile realDeleteFile(String id){
+    public static TcFile realDeleteFile(String id) {
         return fileOption.realDeleteFile(id);
     }
 }

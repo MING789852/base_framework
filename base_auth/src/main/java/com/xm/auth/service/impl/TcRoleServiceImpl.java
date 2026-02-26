@@ -1,6 +1,8 @@
 package com.xm.auth.service.impl;
 
+import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollectionUtil;
+import cn.hutool.core.exceptions.ExceptionUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
@@ -13,18 +15,25 @@ import com.xm.auth.service.TcRoleRouterRelService;
 import com.xm.auth.service.TcRoleService;
 import com.xm.auth.service.TcRouterActionService;
 import com.xm.auth.service.TcUserRoleRelService;
+import com.xm.core.consts.ColumnPropsType;
+import com.xm.core.enums.QueryColumnTypeEnum;
+import com.xm.core.enums.QueryConditionEnum;
+import com.xm.core.params.ColumnProps;
 import com.xm.module.core.params.QueryData;
+import com.xm.util.common.CommonUtil;
+import com.xm.util.excel.ExcelUtils;
+import com.xm.util.excel.params.DynamicExcelWithMerge;
 import com.xm.util.id.SnowIdUtil;
 import com.xm.util.valid.ValidationResult;
 import com.xm.util.valid.ValidationUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.poi.ss.usermodel.Workbook;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.Arrays;
-import java.util.Date;
-import java.util.List;
+import javax.servlet.http.HttpServletResponse;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -44,6 +53,14 @@ public class TcRoleServiceImpl implements TcRoleService {
     public List<TcRole> getRoleList() {
         LambdaQueryWrapper<TcRole> queryWrapper=new LambdaQueryWrapper<>();
         queryWrapper.eq(TcRole::getJudgeEnable,1);
+        return tcRoleMapper.selectList(queryWrapper);
+    }
+
+    @Override
+    public List<TcRole> selectRoleByRoleCodeList(List<String> roleCodeList) {
+        LambdaQueryWrapper<TcRole> queryWrapper=new LambdaQueryWrapper<>();
+        queryWrapper.eq(TcRole::getJudgeEnable,1);
+        queryWrapper.in(TcRole::getRoleCode,roleCodeList);
         return tcRoleMapper.selectList(queryWrapper);
     }
 
@@ -106,12 +123,40 @@ public class TcRoleServiceImpl implements TcRoleService {
     }
 
     @Override
-    public Page<RoleRelUserVo> selectUserAndDeptPageByRoleId(String roleId, QueryData<RoleRelUserVo> queryData) {
+    public Page<RoleRelUserVo> selectUserPageByRoleId(String roleId, QueryData<RoleRelUserVo> queryData) {
         Page<RoleRelUserVo> page=new Page<>(queryData.getCurrent(), queryData.getSize());
         QueryWrapper<RoleRelUserVo> wrapper = queryData.generateQueryWrapperDisUnderlineCase();
         List<RoleRelUserVo> records = tcRoleMapper.selectUserByRoleId(roleId, wrapper, page);
         page.setRecords(records);
         return page;
+    }
+
+    @Override
+    public void exportRoleUsersExcel(String roleId, QueryData<RoleRelUserVo> queryData, HttpServletResponse response) {
+        try {
+            QueryWrapper<RoleRelUserVo> wrapper = queryData.generateQueryWrapperDisUnderlineCase();
+            List<RoleRelUserVo> records = tcRoleMapper.selectUserByRoleId(roleId, wrapper, null);
+            List<ColumnProps> roleUsersColumnProps = getRoleUsersColumnProps();
+            DynamicExcelWithMerge<Object> dynamicExcelWithMerge=new DynamicExcelWithMerge<>();
+            dynamicExcelWithMerge.setRowColumnSpanMap(new HashMap<>());
+            dynamicExcelWithMerge.setMainTableData(CommonUtil.toMapList(records));
+            dynamicExcelWithMerge.setMainColumns(roleUsersColumnProps);
+            Workbook workbook = ExcelUtils.exportDynamicDataWithMergeToExcel(dynamicExcelWithMerge);
+            ExcelUtils.exportExcel(workbook,response);
+        } catch (Exception e) {
+            String msg=StrUtil.format("导出excel失败->{}", ExceptionUtil.stacktraceToString(e));
+            log.error(msg);
+            throw new CommonException(msg);
+        }
+    }
+
+    @Override
+    public List<ColumnProps> getRoleUsersColumnProps() {
+        List<ColumnProps> list=new ArrayList<>();
+        list.add(new ColumnProps("用户名称", "nickName", ColumnPropsType.COMMON, QueryColumnTypeEnum.INPUT.getValue(), QueryConditionEnum.LIKE.getValue()));
+        list.add(new ColumnProps("用户账号", "userName", ColumnPropsType.COMMON, QueryColumnTypeEnum.INPUT.getValue(), QueryConditionEnum.LIKE.getValue()));
+        list.add(new ColumnProps("工号", "jobNumber", ColumnPropsType.COMMON, QueryColumnTypeEnum.INPUT.getValue(), QueryConditionEnum.LIKE.getValue()));
+        return list;
     }
 
     @Override

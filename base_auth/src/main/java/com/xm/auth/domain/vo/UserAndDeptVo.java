@@ -2,8 +2,10 @@ package com.xm.auth.domain.vo;
 
 import lombok.Data;
 
+import java.io.Serializable;
+
 @Data
-public class UserAndDeptVo  {
+public class UserAndDeptVo  implements Serializable {
     private String userId;
     private String deptId;
     private String deptName;

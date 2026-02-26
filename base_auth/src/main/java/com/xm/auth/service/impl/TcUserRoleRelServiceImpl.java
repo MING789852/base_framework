@@ -210,4 +210,15 @@ public class TcUserRoleRelServiceImpl implements TcUserRoleRelService {
         userRoleRelLambdaQueryWrapper.in(TcUserRoleRel::getRoleId,roleIdList);
         userRoleRelMapper.delete(userRoleRelLambdaQueryWrapper);
     }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public int unRelByUserIdList(List<String> userIdList) {
+        if (CollectionUtil.isEmpty(userIdList)){
+            return 0;
+        }
+        LambdaQueryWrapper<TcUserRoleRel> userRoleRelLambdaQueryWrapper=new LambdaQueryWrapper<>();
+        userRoleRelLambdaQueryWrapper.in(TcUserRoleRel::getUserId,userIdList);
+        return userRoleRelMapper.delete(userRoleRelLambdaQueryWrapper);
+    }
 }

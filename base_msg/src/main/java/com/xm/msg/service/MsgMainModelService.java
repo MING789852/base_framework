@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.xm.core.msg.params.Msg;
 import com.xm.module.core.params.QueryData;
 import com.xm.module.core.service.BaseService;
+import com.xm.msg.domain.dto.MsgDto;
 import com.xm.msg.domain.entity.TcMsg;
 import com.xm.msg.mapper.TcMsgMapper;
 
@@ -28,7 +29,9 @@ public interface MsgMainModelService extends BaseService<TcMsgMapper, TcMsg> {
     String deleteData(List<TcMsg> list);
 
 
-    String saveOrUpdateMsg(List<Msg> list);
+    String saveOrUpdateMsg(List<MsgDto> list);
+
+    String finishMsg(List<Msg> list);
 
     Map<String,Object> getDictMapping();
 }

@@ -55,20 +55,26 @@ const statusChange = () => {
     let dictMapping = ref({
       statusDetailModelId:dictRes.data
     })
-    common.openInputDialog(columns, dictMapping, defaultData, (result) => {
-      if (common.isStrBlank(result.data.statusDetailModelId)){
-        return message('请选中后操作',{type:'error'})
+    let params:OpenInputDialogDefine = {
+      columns: columns,
+      defaultValue: defaultData,
+      dictMapping: dictMapping,
+      callBack: (result) => {
+        if (common.isStrBlank(result.data.statusDetailModelId)){
+          return message('请选中后操作',{type:'error'})
+        }
+        let data = {
+          statusMainModelId: statusModelId.value,
+          statusDetailModelId: result.data.statusDetailModelId,
+          statusList: statusList.value
+        }
+        common.handleRequestApi(statusMainModelApi.statusModelChangeAdd(data)).then(res => {
+          statusList.value = res.data
+          result.done()
+        })
       }
-      let data = {
-        statusMainModelId: statusModelId.value,
-        statusDetailModelId: result.data.statusDetailModelId,
-        statusList: statusList.value
-      }
-      common.handleRequestApi(statusMainModelApi.statusModelChangeAdd(data)).then(res => {
-        statusList.value = res.data
-        result.done()
-      })
-    })
+    }
+    common.openInputDialog(params)
   })
 }
 </script>

@@ -5,25 +5,28 @@ import cn.hutool.core.codec.Base64;
 import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.exceptions.ExceptionUtil;
-import cn.hutool.core.io.IoUtil;
 import cn.hutool.core.util.StrUtil;
-
+import cn.hutool.json.JSONUtil;
+import com.baomidou.dynamic.datasource.annotation.DSTransactional;
 import com.xm.advice.exception.exception.CommonException;
 import com.xm.auth.domain.entity.TcUser;
+import com.xm.auth.service.TcUserService;
 import com.xm.flowable.cmd.RollBackResult;
+import com.xm.flowable.cmd.SimpleProcessRollbackCmd;
+import com.xm.flowable.cmd.SpecifyProcessRollbackCmd;
 import com.xm.flowable.domain.dto.*;
+import com.xm.flowable.domain.params.CallBackOtherParams;
 import com.xm.flowable.domain.res.ExecuteTaskRes;
-import com.xm.flowable.domain.vo.ProcessInstanceVo;
-import com.xm.flowable.domain.vo.TaskInfoVo;
-import com.xm.flowable.enums.OtherVariableNameEnum;
-import com.xm.flowable.enums.ProcessVariableNameEnum;
-import com.xm.flowable.enums.TaskStatusEnum;
-import com.xm.flowable.enums.TaskVariableNameEnum;
+import com.xm.flowable.domain.res.FlowableMsgCreate;
+import com.xm.flowable.domain.vo.*;
+import com.xm.flowable.enums.*;
 import com.xm.flowable.listener.FlowableTaskListener;
+import com.xm.flowable.listener.FlowableTestTipListener;
 import com.xm.flowable.service.FlowableModelService;
 import com.xm.flowable.service.FlowableService;
-import com.xm.flowable.cmd.SimpleProcessRollbackCmd;
+import com.xm.util.FlowableMsgUtil;
 import com.xm.util.FlowableUtil;
+import com.xm.util.auth.UserInfoUtil;
 import com.xm.util.bean.SpringBeanUtil;
 import com.xm.util.lock.LockUtil;
 import com.xm.util.valid.ValidationUtils;
@@ -46,11 +49,9 @@ import org.flowable.task.api.Task;
 import org.flowable.task.api.history.HistoricTaskInstance;
 import org.springframework.stereotype.Service;
 
-import javax.servlet.http.HttpServletResponse;
 import java.io.InputStream;
-import java.io.OutputStream;
-import java.net.URLEncoder;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -68,6 +69,10 @@ public class FlowableServiceImpl implements FlowableService {
     private final ExpressionManager expressionManager;
 
     private final ManagementService managementService;
+
+    private final DynamicBpmnService dynamicBpmnService;
+
+    private final TcUserService userService;
 
     private List<UserTask> createUserTaskBySimpleFlowUserList(List<SimpleFlowUser> flowUserList){
         if (CollectionUtil.isEmpty(flowUserList)){
@@ -236,6 +241,57 @@ public class FlowableServiceImpl implements FlowableService {
     }
 
     @Override
+    public ProcessInstanceVo getProcessInstanceVoById(String processInstanceId) {
+        if (StrUtil.isBlank(processInstanceId)){
+            return null;
+        }
+        ProcessInstance processInstance = runtimeService.createProcessInstanceQuery()
+                .processInstanceId(processInstanceId)
+                .includeProcessVariables()
+                .singleResult();
+        if (processInstance==null){
+            HistoricProcessInstance historicProcessInstance = historyService.createHistoricProcessInstanceQuery()
+                    .processInstanceId(processInstanceId)
+                    .includeProcessVariables()
+                    .singleResult();
+            if (historicProcessInstance==null){
+                return null;
+            }
+            return FlowableUtil.hisProcInsConvertProcInsVo(historicProcessInstance);
+        }else {
+            return FlowableUtil.procInsConvertProcInsVo(processInstance);
+        }
+    }
+
+    @Override
+    public TaskInfoVo getTaskInfoVoById(String processInstanceId,String taskId) {
+        if (StrUtil.isBlank(processInstanceId)||StrUtil.isBlank(taskId)){
+            return null;
+        }
+        Task task = taskService.createTaskQuery()
+                .taskId(taskId)
+                .processInstanceId(processInstanceId)
+                .includeProcessVariables()
+                .includeTaskLocalVariables()
+                .singleResult();
+        if (task==null){
+            HistoricTaskInstance historicTaskInstance = historyService.createHistoricTaskInstanceQuery()
+                    .includeProcessVariables()
+                    .includeTaskLocalVariables()
+                    .taskId(taskId)
+                    .processInstanceId(processInstanceId)
+                    .singleResult();
+            if (historicTaskInstance==null){
+                return null;
+            }else {
+                return FlowableUtil.hisTaskConvertToTaskInfoVo(historicTaskInstance);
+            }
+        }else {
+            return FlowableUtil.taskConvertToTaskInfoVo(task);
+        }
+    }
+
+    @Override
     public ProcessInstance startProcess(StartProcessInstance startProcessInstance){
         ValidationUtils.validateEntity(startProcessInstance);
         String processDefinitionKey = startProcessInstance.getProcessDefinitionKey();
@@ -249,6 +305,7 @@ public class FlowableServiceImpl implements FlowableService {
         String businessKey = startProcessInstance.getBusinessKey();
         String businessNo = startProcessInstance.getBusinessNo();
         String businessType = startProcessInstance.getBusinessType();
+        TcUser creator = startProcessInstance.getCreator();
 
         if (data==null){
             data=new HashMap<>();
@@ -270,6 +327,18 @@ public class FlowableServiceImpl implements FlowableService {
         data.put(ProcessVariableNameEnum.businessType.name(),businessType);
         data.put(ProcessVariableNameEnum.id.name(),id);
 
+        data.put(ProcessVariableNameEnum.createTime.name(), DateUtil.format(new Date(),"yyyy-MM-dd HH:mm:ss"));
+        if (creator!=null){
+            data.put(ProcessVariableNameEnum.creator.name(),creator.getNickName());
+            data.put(ProcessVariableNameEnum.creatorId.name(),creator.getId());
+        }else {
+            TcUser currentLoginUser = UserInfoUtil.getCurrentLoginUserBySessionOrToken();
+            if (currentLoginUser!=null){
+                data.put(ProcessVariableNameEnum.creator.name(),currentLoginUser.getNickName());
+                data.put(ProcessVariableNameEnum.creatorId.name(),currentLoginUser.getId());
+            }
+        }
+
         ProcessInstance start = runtimeService.createProcessInstanceBuilder()
                 .processDefinitionKey(processDefinitionKey)
                 .name(name)
@@ -277,6 +346,18 @@ public class FlowableServiceImpl implements FlowableService {
         ProcessInstanceVo processInstanceVo = FlowableUtil.procInsConvertProcInsVo(start);
         executeTaskCallBack(processInstanceVo,null,TaskStatusEnum.init,false,null);
         log.info("流程启动,模型id->{},模型key->{},流程id->{},流程名称->{},流程业务编码->{}",start.getDeploymentId(),start.getProcessDefinitionKey(),start.getId(),start.getName(),start.getBusinessKey());
+
+
+        //如果是启动审批,启动审批人员和当前审批人员相同，则直接通过
+        if (startProcessInstance.isAutoExecuteTask()){
+            List<TaskInfoVo> taskInfoVoList = FlowableUtil.currentUserValidateCanApprove(processInstanceVo.getId());
+            if (CollectionUtil.isNotEmpty(taskInfoVoList)){
+                ExecuteTask executeTask=new ExecuteTask(processInstanceVo.getId(),TaskStatusEnum.success,"系统自动通过");
+                executeTask(executeTask);
+                log.info("流程启动,流程id->{},流程名称->{},启动审批人员和当前审批人员相同,系统自动审批通过",start.getId(),start.getName());
+            }
+        }
+
         return start;
     }
 
@@ -285,6 +366,7 @@ public class FlowableServiceImpl implements FlowableService {
     public List<TaskInfoVo> processAllTask(String processInstanceId) {
         List<TaskInfoVo> taskInfoVos=new ArrayList<>();
 
+        //查询已审批
         List<HistoricTaskInstance> hisList = historyService.createHistoricTaskInstanceQuery()
                 .processInstanceId(processInstanceId)
                 .finished().taskWithoutDeleteReason()
@@ -297,6 +379,7 @@ public class FlowableServiceImpl implements FlowableService {
             }
         }
 
+        //查询正在审批
         List<Task> list = taskService.createTaskQuery()
                 .active()
                 .processInstanceId(processInstanceId).includeProcessVariables().includeTaskLocalVariables().list();
@@ -306,30 +389,19 @@ public class FlowableServiceImpl implements FlowableService {
             }
         }
 
-        return taskInfoVos;
-    }
+        //查询回滚
+        ProcessInstanceVo processInstanceVo = getProcessInstanceVoById(processInstanceId);
+        if (processInstanceVo!=null){
+            Map<String,Object> variables=processInstanceVo.getProcessVariables();
+            List<TaskInfoVo> rollBackRecordMsgList = Optional.ofNullable(variables.get(ProcessVariableNameEnum.rollBackRecordMsg.name()))
+                    .map(rollBackRecordMsgObj -> JSONUtil.toList(rollBackRecordMsgObj.toString(), TaskInfoVo.class))
+                    .orElse(new ArrayList<>());
+            //处理排序
+            taskInfoVos.addAll(rollBackRecordMsgList);
+            taskInfoVos=taskInfoVos.stream().sorted(Comparator.comparing(TaskInfoVo::getCreateTime)).collect(Collectors.toList());
 
-    @Override
-    public List<TaskInfoVo> processAllTaskWithoutData(String processInstanceId) {
-        List<TaskInfoVo> taskInfoVos=new ArrayList<>();
-
-        List<HistoricTaskInstance> hisList = historyService.createHistoricTaskInstanceQuery()
-                .processInstanceId(processInstanceId)
-                .finished().taskWithoutDeleteReason().list();
-        if (CollectionUtil.isNotEmpty(hisList)){
-            for (HistoricTaskInstance task:hisList){
-                taskInfoVos.add(FlowableUtil.hisTaskConvertToTaskInfoVo(task));
-            }
         }
 
-        List<Task> list = taskService.createTaskQuery()
-                .active()
-                .processInstanceId(processInstanceId).list();
-        if (CollectionUtil.isNotEmpty(list)){
-            for (Task task:list){
-                taskInfoVos.add(FlowableUtil.taskConvertToTaskInfoVo(task));
-            }
-        }
 
         return taskInfoVos;
     }
@@ -397,56 +469,57 @@ public class FlowableServiceImpl implements FlowableService {
                 .processInstanceId(processInstanceId).count();
     }
 
-    private void executeTaskCallBack(ProcessInstanceVo processInstance, TaskInfoVo taskInfoVo, TaskStatusEnum taskStatusEnum, boolean isFinish, Map<String,Object> otherVariable){
+    private void executeTaskCallBack(ProcessInstanceVo processInstance, TaskInfoVo taskInfoVo, TaskStatusEnum taskStatusEnum, boolean isFinish, CallBackOtherParams params){
         Map<String, Object> processVariables = processInstance.getProcessVariables();
-        String listenerClassName = (String) processVariables.get(ProcessVariableNameEnum.listener.name());
+        String listenerClassName = FlowableUtil.getMapVariable(processVariables,ProcessVariableNameEnum.listener.name());
         if (StrUtil.isNotBlank(listenerClassName)){
             FlowableTaskListener beanByClass;
             try {
+                String businessType = FlowableUtil.getMapVariable(processVariables,ProcessVariableNameEnum.businessType.name());
+                String businessKey = FlowableUtil.getMapVariable(processVariables,ProcessVariableNameEnum.businessKey.name());
+                if (businessKey==null){
+                    throw new CommonException("业务key为空，处理审批回调失败");
+                }
+                if (businessType==null){
+                    throw new CommonException("业务type为空，处理审批回调失败");
+                }
+                if(taskInfoVo==null){
+                    taskInfoVo=new TaskInfoVo();
+                }
+                if (params==null){
+                    params=new CallBackOtherParams();
+                }
+                //获取当前审批任务人
+                List<TaskInfoVo> taskInfoVos = processActiveTaskWithoutData(processInstance.getId());
+                List<String> currentApproveUserIdList = taskInfoVos.stream().map(TaskInfoVo::getAssignee).collect(Collectors.toList());
+
                 beanByClass = (FlowableTaskListener) SpringBeanUtil.getBeanByClass(Class.forName(listenerClassName));
-                beanByClass.execute(processInstance,taskInfoVo,taskStatusEnum,isFinish,otherVariable);
+                beanByClass.execute(processInstance,currentApproveUserIdList,taskInfoVo,taskStatusEnum,isFinish,params);
+
+                List<FlowableMsgCreate> flowableMsgCreates = beanByClass.getMsglist(processInstance, currentApproveUserIdList, taskInfoVo, taskStatusEnum, isFinish, params);
+                FlowableMsgUtil.handleApprovingMsg(processInstance.getId(),processVariables, taskStatusEnum,currentApproveUserIdList,flowableMsgCreates, isFinish,
+                        businessKey, businessType);
             } catch (ClassNotFoundException e) {
                 log.info("流程id->{},业务监听类不存在->{}",processInstance.getId(),ExceptionUtil.stacktraceToString(e));
             }
         }
     }
 
-    private void executeTaskWithOutLock(ExecuteTask executeTask){
-        TcUser userBySession = executeTask.getUser();
-        if (userBySession==null){
-            throw new CommonException("未登录无法操作");
-        }
-        String taskId = executeTask.getTaskId();
+    private void executeTaskWithOutLock(ProcessInstance processInstance, Task task,ExecuteTask executeTask){
         String status = executeTask.getStatus().name();
         String msg = executeTask.getMsg();
-        if (StrUtil.isBlank(taskId)){
-            throw new CommonException("任务id为空，无法执行");
+        TcUser executeTaskUser = executeTask.getUser();
+        if (executeTaskUser==null){
+            throw new CommonException("审批执行人员为空,无法操作");
         }
-        Task task = taskService.createTaskQuery().taskId(taskId)
-                .includeProcessVariables().includeTaskLocalVariables().singleResult();
-        if (task==null){
-            throw new CommonException("任务id不存在，无法执行");
+        Map<String, Object> variable = executeTask.getVariable();
+        if (variable==null){
+            variable=new HashMap<>();
         }
         if (StrUtil.isBlank(msg)){
             msg="";
         }
-        ProcessInstance processInstance = runtimeService.createProcessInstanceQuery()
-                .processInstanceId(task.getProcessInstanceId())
-                .includeProcessVariables().singleResult();
-        if (processInstance==null){
-            throw new CommonException("流程不存在，无法继续操作");
-        }
-        if (processInstance.isSuspended()){
-            throw new CommonException("审批已驳回，无法继续操作");
-        }
-
-//        if (!StrUtil.equals(id,task.getAssignee())){
-//            //领取任务
-//            taskService.unclaim(task.getId());
-//            taskService.claim(task.getId(),id);
-//            throw new CommonException("执行人和当前用户不匹配");
-//        }
-        TaskStatusEnum taskStatusEnum = TaskStatusEnum.mapping.get(status);
+        TaskStatusEnum taskStatusEnum = TaskStatusEnum.getEnumByName(status);
         if (taskStatusEnum==null){
             throw new CommonException("非法任务执行状态");
         }
@@ -454,11 +527,17 @@ public class FlowableServiceImpl implements FlowableService {
         Map<String,Object> localVariable=new HashMap<>();
         localVariable.put(TaskVariableNameEnum.status.name(),status);
         localVariable.put(TaskVariableNameEnum.msg.name(), msg);
+        localVariable.put(TaskVariableNameEnum.executeTaskUserName.name(), executeTaskUser.getNickName());
+        localVariable.put(TaskVariableNameEnum.executeTaskUserId.name(), executeTaskUser.getId());
         String actionTime = DateUtil.formatDateTime(new Date());
         localVariable.put(TaskVariableNameEnum.actionTime.name(), actionTime);
 
         if (taskStatusEnum != TaskStatusEnum.transfer){
-            taskService.setVariablesLocal(task.getId(),localVariable);
+            if (CollectionUtil.isNotEmpty(localVariable)){
+                for (Map.Entry<String,Object> entry:localVariable.entrySet()){
+                    taskService.setVariableLocal(task.getId(),entry.getKey(),entry.getValue());
+                }
+            }
         }
 
         //转换task
@@ -468,41 +547,67 @@ public class FlowableServiceImpl implements FlowableService {
         taskInfoVo.setActionTime(actionTime);
         taskInfoVo.setStatus(TaskVariableNameEnum.status.name());
 
-        Map<String,Object> otherVariable=new HashMap<>();
-        otherVariable.put(OtherVariableNameEnum.executeTask.name(),executeTask);
-
         boolean isFinish = false;
         ProcessInstanceVo processInstanceVo = FlowableUtil.procInsConvertProcInsVo(processInstance);
+        CallBackOtherParams params=new CallBackOtherParams();
         if (taskStatusEnum == TaskStatusEnum.reject||taskStatusEnum == TaskStatusEnum.suspend){
             //流程执行
-            taskService.complete(task.getId());
+            taskService.complete(task.getId(),variable);
             //停止流程
             suspendProcess(task.getProcessInstanceId());
             isFinish=true;
-            executeTaskCallBack(processInstanceVo,taskInfoVo,taskStatusEnum,isFinish,otherVariable);
+            executeTaskCallBack(processInstanceVo,taskInfoVo,taskStatusEnum,isFinish,params);
         }else if (taskStatusEnum == TaskStatusEnum.success){
             //流程执行
-            taskService.complete(task.getId());
+            taskService.complete(task.getId(),variable);
             //查询当前是否还存在任务
             long count= processActiveTaskCountWithoutData(processInstance.getId());
             if (count==0){
                 isFinish=true;
             }
-            executeTaskCallBack(processInstanceVo,taskInfoVo,taskStatusEnum,isFinish,otherVariable);
+            executeTaskCallBack(processInstanceVo,taskInfoVo,taskStatusEnum,isFinish,params);
         }else if (taskStatusEnum == TaskStatusEnum.rollback){
-            //回滚
-            RollBackResult rollBackResult = rollbackSimpleProcess(processInstance,task.getExecutionId());
-            if (rollBackResult.isFinish()){
-                isFinish=true;
+            List<String> rollbackTargetActIdList = executeTask.getRollbackTargetActIdList();
+            if (CollectionUtil.isEmpty(rollbackTargetActIdList)){
+                //回滚
+                RollBackResult rollBackResult = rollbackSimpleProcess(processInstance,task.getExecutionId(),new RollBackWithData(false,task,""));
+                isFinish=rollBackResult.isFinish();
+            }else {
+                RollBackResult rollBackResult = rollBackSpecifyProcess(processInstance,task.getExecutionId(),rollbackTargetActIdList,new RollBackWithData(false,task,""));
+                isFinish=rollBackResult.isFinish();
             }
-            executeTaskCallBack(processInstanceVo,taskInfoVo,taskStatusEnum,isFinish,otherVariable);
-        }else if (taskStatusEnum == TaskStatusEnum.transfer){
-            if (taskInfoVo.getAssignee().equals(executeTask.getMsg())){
+            executeTaskCallBack(processInstanceVo,taskInfoVo,taskStatusEnum,isFinish,params);
+        }else if (taskStatusEnum == TaskStatusEnum.rollBackRecordMsg){
+            List<String> rollbackTargetActIdList = executeTask.getRollbackTargetActIdList();
+            if (CollectionUtil.isEmpty(rollbackTargetActIdList)){
+                //回滚
+                RollBackResult rollBackResult = rollbackSimpleProcess(processInstance,task.getExecutionId(),new RollBackWithData(true,task,msg));
+                isFinish=rollBackResult.isFinish();
+            }else {
+                RollBackResult rollBackResult = rollBackSpecifyProcess(processInstance,task.getExecutionId(),rollbackTargetActIdList,new RollBackWithData(true,task,msg));
+                isFinish=rollBackResult.isFinish();
+            }
+            executeTaskCallBack(processInstanceVo,taskInfoVo,taskStatusEnum,isFinish,params);
+        } else if (taskStatusEnum == TaskStatusEnum.transfer){
+            String transferUserId = executeTask.getTransferUserId();
+            if (StrUtil.isBlank(transferUserId)){
+                throw new CommonException("转办人员不能为空");
+            }
+            String userId = taskInfoVo.getAssignee();
+            if (taskInfoVo.getAssignee().equals(transferUserId)){
                 throw new CommonException("相同人员无法转办");
             }
-            taskService.unclaim(task.getId());
-            taskService.claim(task.getId(),executeTask.getMsg());
-            executeTaskCallBack(processInstanceVo,taskInfoVo,taskStatusEnum,isFinish,otherVariable);
+            Map<String, Object> variables = taskInfoVo.getTaskLocalVariables();
+            String transferUserListStr = FlowableUtil.getMapVariable(variables, TaskVariableNameEnum.transferUser.name());
+            List<TransferUser> transferUserList=Optional.ofNullable(transferUserListStr)
+                    .map(s -> JSONUtil.toList(s,TransferUser.class)).orElse(new ArrayList<>());
+            transferUserList.add(new TransferUser(task.getTaskDefinitionKey(),userId,transferUserId));
+            taskService.setVariableLocal(task.getId(),TaskVariableNameEnum.transferUser.name(),JSONUtil.toJsonStr(transferUserList));
+            taskService.setAssignee(task.getId(),transferUserId);
+//            taskService.setOwner(task.getId(),userId);
+//            taskService.delegateTask(task.getId(),transferUserId);
+//            taskService.resolveTask(task.getId());
+            executeTaskCallBack(processInstanceVo,taskInfoVo,taskStatusEnum,isFinish,params);
         } else if (taskStatusEnum == TaskStatusEnum.delete){
             isFinish=true;
             //删除流程
@@ -519,13 +624,51 @@ public class FlowableServiceImpl implements FlowableService {
 
     @Override
     public void executeTask(ExecuteTask executeTask){
-        LockUtil.lock(executeTask.getTaskId(), ()->{
-            executeTaskWithOutLock(executeTask);
+        String processInstanceId = executeTask.getProcessInstanceId();
+        TaskExecuteActionTypeEnum executeActionType = executeTask.getExecuteActionType();
+        ProcessInstance processInstance = runtimeService.createProcessInstanceQuery()
+                .processInstanceId(processInstanceId)
+                .includeProcessVariables().singleResult();
+        if (processInstance==null){
+            throw new CommonException("流程不存在，无法继续操作");
+        }
+        if (processInstance.isSuspended()){
+            throw new CommonException("审批已驳回，无法继续操作");
+        }
+        String taskId;
+        if (TaskExecuteActionTypeEnum.customUser.equals(executeActionType)){
+            TcUser userBySession = executeTask.getUser();
+            if (userBySession==null){
+                throw new CommonException("执行人员不能为空");
+            }
+            taskId = executeTask.getTaskId();
+            if (StrUtil.isBlank(taskId)){
+                throw new CommonException("任务id为空，无法执行");
+            }
+        }else {
+            //自动校验是否有权限审批
+            TcUser currentLoginUser = UserInfoUtil.getCurrentLoginUserBySessionOrTokenNotNull();
+            List<TaskInfoVo> taskInfoVoList = FlowableUtil.currentUserValidateCanApprove(processInstanceId);
+            if (CollectionUtil.isEmpty(taskInfoVoList)){
+                throw new CommonException("无权限或无需执行审批");
+            }
+            TaskInfoVo taskInfoVo=taskInfoVoList.get(0);
+            taskId = taskInfoVo.getId();
+            executeTask.setUser(currentLoginUser);
+            executeTask.setTaskId(taskId);
+        }
+
+        Task task = taskService.createTaskQuery().taskId(taskId)
+                .includeProcessVariables().includeTaskLocalVariables().singleResult();
+        if (task==null){
+            throw new CommonException("任务id不存在，无法执行");
+        }
+        LockUtil.lock(processInstanceId, ()->{
+            executeTaskWithOutLock(processInstance,task,executeTask);
             return "";
         },(e)->{
-            String msg=StrUtil.format("审批失败->{}", ExceptionUtil.stacktraceToString(e));
-            log.error(msg);
-            throw new CommonException(msg);
+            log.error(StrUtil.format(StrUtil.format("审批失败->{}", ExceptionUtil.stacktraceToString(e))));
+            throw new CommonException(StrUtil.format("审批失败->{}", e.getMessage()));
         });
     }
 
@@ -602,11 +745,15 @@ public class FlowableServiceImpl implements FlowableService {
 
     @Override
     public void deleteDeploymentByKey(String key) {
-        Deployment deployment = repositoryService.createDeploymentQuery().deploymentKey(key).singleResult();
-        if (deployment==null){
+        List<Deployment> deploymentList = repositoryService.
+                createDeploymentQuery().
+                deploymentKey(key).list();
+        if (CollectionUtil.isEmpty(deploymentList)){
             return;
         }
-        deleteDeploymentById(deployment.getId());
+        for (Deployment deployment : deploymentList){
+            deleteDeploymentById(deployment.getId());
+        }
     }
 
 
@@ -639,55 +786,328 @@ public class FlowableServiceImpl implements FlowableService {
         }
     }
 
-    @Override
-    public void transfer(String taskId, String assignee) {
-        taskService.unclaim(taskId);
-        taskService.claim(taskId, assignee);
-    }
-
-    private RollBackResult rollbackSimpleProcess(ProcessInstance processInstance,String executionId){
-        RollBackResult rollBackResult = managementService.executeCommand(new SimpleProcessRollbackCmd(processInstance, executionId));
+    private void handleRollBackResult(ProcessInstance processInstance,RollBackResult rollBackResult){
         if (rollBackResult.isFinish()){
             runtimeService.deleteProcessInstance(processInstance.getId(),"回滚");
             historyService.deleteHistoricProcessInstance(processInstance.getId());
-        }else {
-            //处理转办问题
-            Map<String, String> upstreamActIdAndAssigneeMapping = rollBackResult.getUpstreamActIdAndAssigneeMapping();
-            if (CollectionUtil.isNotEmpty(upstreamActIdAndAssigneeMapping)){
-                List<Task> activeList = taskService.createTaskQuery().processInstanceId(processInstance.getId()).active().list();
-                for (Task task:activeList){
-                    String assignee = upstreamActIdAndAssigneeMapping.get(task.getTaskDefinitionKey());
-                    if (StrUtil.isNotBlank(assignee)){
-                        taskService.setAssignee(task.getId(),assignee);
-                    }
-                }
-            }
         }
+    }
+
+    private RollBackResult rollBackSpecifyProcess(ProcessInstance processInstance, String executionId, List<String> rollbackTargetActIdList, RollBackWithData rollBackWithData){
+        RollBackResult rollBackResult = managementService.executeCommand(new SpecifyProcessRollbackCmd(processInstance, executionId, rollbackTargetActIdList, rollBackWithData));
+        handleRollBackResult(processInstance,rollBackResult);
+        return rollBackResult;
+    }
+
+    private RollBackResult rollbackSimpleProcess(ProcessInstance processInstance,String executionId, RollBackWithData rollBackWithData){
+        RollBackResult rollBackResult = managementService.executeCommand(new SimpleProcessRollbackCmd(processInstance, executionId,rollBackWithData));
+        handleRollBackResult(processInstance,rollBackResult);
         return rollBackResult;
     }
 
     @Override
-    public boolean viewProcessImageByProcessId(String processInstanceId, HttpServletResponse response) {
-        InputStream processImage = getProcessImage(processInstanceId);
-        byte[] readBytes= IoUtil.readBytes(processImage);
+    public FlowableExecuteVo getExecuteInfoByProcessId(String processInstanceId) {
+        ProcessInstance processInstance = runtimeService.createProcessInstanceQuery()
+                .processInstanceId(processInstanceId)
+                .singleResult();
+        if (processInstance==null){
+            throw new CommonException("流程已完成或不存在");
+        }
+        // 获取流程定义
+        BpmnModel bpmnModel = repositoryService.getBpmnModel(processInstance.getProcessDefinitionId());
+        Process mainProcess = bpmnModel.getMainProcess();
+        Collection<FlowElement> flowElements = mainProcess.getFlowElements();
+        if (CollectionUtil.isEmpty(flowElements)){
+            throw new CommonException("流程定义不存在");
+        }
+        if (StrUtil.isBlank(processInstanceId)){
+            throw new CommonException("流程id为空");
+        }
+        List<TaskInfoVo> taskInfoVoList = processActiveTaskWithoutData(processInstanceId);
+        if (CollectionUtil.isEmpty(taskInfoVoList)){
+            throw new CommonException("无需执行审批");
+        }
 
-        try {
-            // 清空response
-            response.reset();
-            // 设置response的Header
-            response.setCharacterEncoding("UTF-8");
-            // 设置文件长度
-            response.setContentLengthLong(readBytes.length);
-            // 在线打开方式 文件名应该编码成UTF-8
-            response.setHeader("Content-Disposition", "inline; filename=" + URLEncoder.encode("image.png", "UTF-8"));
-            OutputStream outputStream=response.getOutputStream();
-            outputStream.write(readBytes);
-            outputStream.flush();
-            outputStream.close();
-            return true;
-        }catch (Exception e){
-            log.error("流程图查看失败",e);
-            throw new CommonException("流程图查看失败");
+        List<FlowElement> sourceFlowElementList=new ArrayList<>();
+        for (TaskInfoVo taskInfoVo:taskInfoVoList){
+            Execution execution = runtimeService
+                    .createExecutionQuery()
+                    .processInstanceId(processInstanceId)
+                    .executionId(taskInfoVo.getExecutionId()).singleResult();
+            if (execution==null){
+                throw new CommonException("流程执行节点不存在");
+            }
+            FlowNode flowNode = (FlowNode) mainProcess.getFlowElement(execution.getActivityId());
+            sourceFlowElementList.add(flowNode);
+        }
+        Map<String, FlowNode> upstreamFlowNode=new HashMap<>();
+        FlowableUtil.getAllUpstreamFlowNode(sourceFlowElementList,upstreamFlowNode);
+
+
+        FlowableExecuteVo flowableExecuteVo=new FlowableExecuteVo();
+        flowableExecuteVo.setTaskIdAndUserNameMapping(taskInfoVoList.stream().collect(Collectors.toMap(TaskInfoVo::getId,TaskInfoVo::getName)));
+        flowableExecuteVo.setTaskIdAndUserIdMapping(taskInfoVoList.stream().collect(Collectors.toMap(TaskInfoVo::getId,TaskInfoVo::getAssignee)));
+
+        Map<String, String> allowRollBackIdAndNameMapping = upstreamFlowNode.entrySet()
+                .stream()
+                .filter(e -> e.getValue() != null)
+                .filter(e-> !(e.getValue() instanceof Gateway))
+                .collect(Collectors.toMap(Map.Entry::getKey, e -> {
+                    FlowNode flowNode = e.getValue();
+                    if (flowNode instanceof StartEvent){
+                        return "开始节点";
+                    }else {
+                        String name = flowNode.getName();
+                        if (StrUtil.isBlank(name)){
+                            return flowNode.getId();
+                        }else {
+                            return name;
+                        }
+                    }
+                }));
+        flowableExecuteVo
+                .setAllowRollBackIdAndNameMapping(allowRollBackIdAndNameMapping);
+
+
+        List<TcUser> userList = userService.getUserList();
+        Map<String, String> userIdAndNameMapping= userList.stream().collect(Collectors.toMap(TcUser::getId,TcUser::getNickName));
+        flowableExecuteVo.setUserIdAndNameMapping(userIdAndNameMapping);
+
+        return flowableExecuteVo;
+    }
+
+    @Override
+    @DSTransactional(rollbackFor = Exception.class)
+    public String createTestProcess(CreateTestProcessInstance createTestProcessInstance) {
+        String businessKey = createTestProcessInstance.getBusinessKey();
+        String processDefinitionKey = createTestProcessInstance.getProcessDefinitionKey();
+        List<VariableData> variableDataList = createTestProcessInstance.getVariableDataList();
+        if (StrUtil.isBlank(businessKey)){
+            throw new CommonException("businessKey不能为空");
+        }
+        if (StrUtil.isBlank(processDefinitionKey)){
+            throw new CommonException("流程定义不能为空");
+        }
+        return LockUtil.tryLock(processDefinitionKey+businessKey, "正在执行操作中,请稍后再试", () -> {
+            String listenerClassName = createTestProcessInstance.getListenerClassName();
+            if (StrUtil.isBlank(listenerClassName)){
+                listenerClassName= FlowableTestTipListener.class.getName();
+            }
+            Map<String, Object> variables = new HashMap<>();
+            if (CollectionUtil.isNotEmpty(variableDataList)){
+                variables=variableDataList.stream().collect(Collectors.groupingBy(VariableData::getKey,
+                        Collectors.collectingAndThen(Collectors.toList(), list -> {
+                            VariableData variableData = list.get(0);
+                            return VariableDataTypeEnum.convertStrValueToObjValue(variableData);
+                        })));
+            }
+            ProcessInstance processInstance = runtimeService.createProcessInstanceQuery()
+                    .active()
+                    .processDefinitionKey(processDefinitionKey)
+                    .processInstanceBusinessKey(businessKey)
+                    .singleResult();
+            String processInstanceId;
+            if (processInstance!=null){
+                processInstanceId = processInstance.getId();
+            }else {
+                HistoricProcessInstance historicProcessInstance = historyService
+                        .createHistoricProcessInstanceQuery()
+                        .processDefinitionKey(processDefinitionKey)
+                        .processInstanceBusinessKey(businessKey)
+                        .singleResult();
+                if (historicProcessInstance!=null){
+                    processInstanceId = historicProcessInstance.getId();
+                }else {
+                    String name = "测试_"+businessKey;
+                    StartProcessInstance startProcessInstance = new StartProcessInstance();
+                    startProcessInstance.setProcessDefinitionKey(processDefinitionKey);
+                    startProcessInstance.setBusinessNo(businessKey);
+                    startProcessInstance.setBusinessKey(businessKey);
+                    startProcessInstance.setBusinessType("test");
+                    startProcessInstance.setJumpUrl(businessKey);
+                    startProcessInstance.setId(businessKey);
+                    startProcessInstance.setTitle(name);
+                    startProcessInstance.setName(name);
+                    if (StrUtil.isNotBlank(listenerClassName)){
+                        try {
+                            @SuppressWarnings("unchecked")
+                            Class<? extends FlowableTaskListener> listenerClass =(Class<? extends FlowableTaskListener>) Class.forName(listenerClassName);
+                            startProcessInstance.setListener(listenerClass);
+                        } catch (ClassNotFoundException e) {
+                            String msg=StrUtil.format("监听器类错误或不存在->{}",ExceptionUtil.stacktraceToString(e));
+                            throw new CommonException(msg);
+                        }
+                    }
+                    startProcessInstance.setData(variables);
+
+                    processInstance = startProcess(startProcessInstance);
+                    processInstanceId=processInstance.getId();
+                }
+            }
+            return processInstanceId;
+        },(e)->{
+            log.error("启动测试流程失败->{}", ExceptionUtil.stacktraceToString(e));
+            throw new CommonException(StrUtil.format("系统异常,启动测试流程失败->{}",e.getMessage()));
+        });
+    }
+
+    @Override
+    @DSTransactional(rollbackFor = Exception.class)
+    public String executeProcess(ExecuteProcessInstance executeProcessInstance) {
+        String taskId = executeProcessInstance.getTaskId();
+        String executeType = executeProcessInstance.getExecuteType();
+        String transferUserId = executeProcessInstance.getTransferUserId();
+        List<String> rollbackTargetActIdList = executeProcessInstance.getRollbackTargetActIdList();
+        String processInstanceId = executeProcessInstance.getProcessInstanceId();
+        String msg = executeProcessInstance.getMsg();
+        if (StrUtil.isBlank(taskId)){
+            throw new CommonException("taskId不能为空");
+        }
+        if (executeType==null){
+            throw new CommonException("type不能为空");
+        }
+        String userId = executeProcessInstance.getUserId();
+        if (StrUtil.isBlank(userId)){
+            throw new CommonException("userId不能为空");
+        }
+        TcUser user = userService.selectById(userId);
+        if (user==null){
+            throw new CommonException("用户不存在");
+        }
+        ExecuteTask executeTask=new ExecuteTask(processInstanceId,taskId,user,executeType, msg);
+        if (TaskStatusEnum.rollback.name().equals(executeType)||TaskStatusEnum.rollBackRecordMsg.name().equals(executeType)){
+            executeTask.setRollbackTargetActIdList(rollbackTargetActIdList);
+        }else if (TaskStatusEnum.transfer.name().equals(executeType)){
+            if (StrUtil.isBlank(transferUserId)){
+                throw new CommonException("转办人员不能为空");
+            }
+            executeTask.setTransferUserId(transferUserId);
+        }
+        executeTask(executeTask);
+        return "操作成功";
+    }
+
+    @Override
+    public List<ProcessVariableVo> getProcessVariableList(String processInstanceId) {
+        if (StrUtil.isBlank(processInstanceId)){
+            throw new CommonException("流程ID为空");
+        }
+        ProcessInstanceVo processInstanceVo = getProcessInstanceVoById(processInstanceId);
+        if (processInstanceVo==null){
+            return new ArrayList<>();
+        }
+        Map<String, Object> processVariables=processInstanceVo.getProcessVariables();
+        List<ProcessVariableVo> variableVoList=new ArrayList<>();
+        for (Map.Entry<String,Object> entry:processVariables.entrySet()){
+            String key = entry.getKey();
+            String value = Optional.ofNullable(entry.getValue()).map(Object::toString).orElse("");
+            variableVoList.add(new ProcessVariableVo(key,value));
+        }
+        return variableVoList;
+    }
+
+    @Override
+    public List<TaskVariableVo> getTaskVariableList(String processInstanceId) {
+        if (StrUtil.isBlank(processInstanceId)){
+            throw new CommonException("流程ID为空");
+        }
+        List<TaskInfoVo> taskInfoVoList = processAllTask(processInstanceId);
+        Map<String, TaskVariableVo> taskVariableVoMap=taskInfoVoList.stream()
+                .collect(Collectors.groupingBy(TaskInfoVo::getId,
+                        Collectors.collectingAndThen(Collectors.toList(),list->{
+
+                            TaskInfoVo taskInfoVo = list.get(0);
+                            TaskVariableVo taskVariableVo=new TaskVariableVo();
+                            taskVariableVo.setTaskId(taskInfoVo.getId());
+                            taskVariableVo.setName(taskInfoVo.getName());
+                            Map<String, Object> taskLocalVariables = taskInfoVo.getTaskLocalVariables();
+                            if (taskLocalVariables==null){
+                                taskLocalVariables=new HashMap<>();
+                            }
+                            taskVariableVo.setVariableList(taskLocalVariables.entrySet()
+                                    .stream().map(entryItem-> new TaskVariableDetailVo(entryItem.getKey(),
+                                            Optional.ofNullable(entryItem.getValue()).map(Object::toString).orElse("")))
+                                    .collect(Collectors.toList()));
+                            return taskVariableVo;
+                        })));
+        return new ArrayList<>(taskVariableVoMap.values());
+    }
+
+    @Override
+    public String saveOrUpdateProcessVariable(String processInstanceId, VariableData variableData) {
+        String key = variableData.getKey();
+        Object value = VariableDataTypeEnum.convertStrValueToObjValue(variableData);
+        if (StrUtil.isBlank(processInstanceId)){
+            throw new CommonException("流程ID不能为空");
+        }
+        if (StrUtil.isBlank(key)){
+            throw new CommonException("流程变量Key不能为空");
+        }
+        ProcessInstanceVo processInstanceVo = getProcessInstanceVoById(processInstanceId);
+        if (processInstanceVo!=null&&!processInstanceVo.isHis()){
+            runtimeService.setVariable(processInstanceId,key,value);
+            return "操作成功";
+        }else {
+            //todo 暂不实现
+            throw new CommonException("流程已结束或不存在，无法新增修改变量");
+        }
+    }
+
+    @Override
+    public String saveOrUpdateTaskVariable(String processInstanceId,String taskId, VariableData variableData) {
+        String key = variableData.getKey();
+        Object value = VariableDataTypeEnum.convertStrValueToObjValue(variableData);
+        if (StrUtil.isBlank(taskId)){
+            throw new CommonException("任务ID不能为空");
+        }
+        if (StrUtil.isBlank(key)){
+            throw new CommonException("任务变量Key不能为空");
+        }
+        TaskInfoVo taskInfoVo = getTaskInfoVoById(processInstanceId, taskId);
+        if (taskInfoVo!=null&&!taskInfoVo.isHis()){
+            taskService.setVariableLocal(taskId,key,value);
+            return "操作成功";
+        }else {
+            //todo 暂不实现
+            throw new CommonException("任务已结束或不存在，无法新增修改变量");
+        }
+    }
+
+    @Override
+    public String deleteProcessVariable(String processInstanceId, VariableData variableData) {
+        String key = variableData.getKey();
+        if (StrUtil.isBlank(processInstanceId)){
+            throw new CommonException("流程ID不能为空");
+        }
+        if (StrUtil.isBlank(key)){
+            throw new CommonException("流程变量Key不能为空");
+        }
+        ProcessInstanceVo processInstanceVo = getProcessInstanceVoById(processInstanceId);
+        if (processInstanceVo!=null&&!processInstanceVo.isHis()){
+            runtimeService.removeVariable(processInstanceId,key);
+            return "操作成功";
+        }else {
+            //todo 暂不实现
+            throw new CommonException("流程已结束或不存在，无法删除变量");
+        }
+    }
+
+    @Override
+    public String deleteTaskVariable(String processInstanceId,String taskId, VariableData variableData) {
+        String key = variableData.getKey();
+        if (StrUtil.isBlank(taskId)){
+            throw new CommonException("任务ID不能为空");
+        }
+        if (StrUtil.isBlank(key)){
+            throw new CommonException("任务变量Key不能为空");
+        }
+        TaskInfoVo taskInfoVo = getTaskInfoVoById(processInstanceId, taskId);
+        if (taskInfoVo!=null&&!taskInfoVo.isHis()){
+            taskService.removeVariableLocal(taskId,key);
+            return "操作成功";
+        }else{
+            //todo 暂不实现
+            throw new CommonException("任务已结束或不存在，无法删除变量");
         }
     }
 
@@ -695,26 +1115,13 @@ public class FlowableServiceImpl implements FlowableService {
      * 获取流程图
      */
     private InputStream getProcessImage(String processInstanceId) {
-        String procDefId;
-        ProcessInstance processInstance = runtimeService.createProcessInstanceQuery()
-                .processInstanceId(processInstanceId)
-                .includeProcessVariables()
-                .singleResult();
-        Map<String,Object> variables;
-        if (processInstance == null) {
-            HistoricProcessInstance historicProcessInstance = historyService.createHistoricProcessInstanceQuery()
-                    .processInstanceId(processInstanceId)
-                    .includeProcessVariables()
-                    .singleResult();
-            if (historicProcessInstance==null){
-                return null;
-            }
-            procDefId = historicProcessInstance.getProcessDefinitionId();
-            variables=historicProcessInstance.getProcessVariables();
-        } else {
-            procDefId = processInstance.getProcessDefinitionId();
-            variables=processInstance.getProcessVariables();
+        ProcessInstanceVo processInstanceVo = getProcessInstanceVoById(processInstanceId);
+        if (processInstanceVo==null){
+            return null;
         }
+        String procDefId=processInstanceVo.getProcessDefinitionId();
+        Map<String,Object> variables=processInstanceVo.getProcessVariables();
+
 
         BpmnModel bpmnModel = repositoryService.getBpmnModel(procDefId);
         DefaultProcessDiagramGenerator defaultProcessDiagramGenerator = new DefaultProcessDiagramGenerator(); // 创建默认的流程图生成器
@@ -789,17 +1196,32 @@ public class FlowableServiceImpl implements FlowableService {
 
         Collection<FlowElement> flowElements = bpmnModel.getMainProcess().getFlowElements();
 
+        //获取所有审批通过task映射
+//        List<HistoricTaskInstance> hisList = historyService.createHistoricTaskInstanceQuery()
+//                .processInstanceId(processInstanceId)
+//                .finished().taskWithoutDeleteReason().list();
+//        Map<String, List<Task>> actIdAndTaskMap = list.stream().collect(Collectors.groupingBy(TaskInfo::getTaskDefinitionKey));
         for (FlowElement flowElement:flowElements){
             if (flowElement instanceof UserTask){
                 UserTask userTask= (UserTask) flowElement;
                 String name = userTask.getName();
-                String assignee = userTask.getAssignee();
                 if (StrUtil.isNotBlank(name)&&name.startsWith("${")){
-                    userTask.setName(getExpressionValue(variables,name).toString());
+                    name=getExpressionValue(variables,name).toString();
+                }else {
+//                    String id = userTask.getId();
+//                    if (!FlowableUtil.isMultiInstanceTaskName(name)){
+//                        List<Task> tasks = actIdAndTaskMap.get(id);
+//                        if (CollectionUtil.isNotEmpty(tasks)){
+//                            Task task = tasks.get(0);
+//                            String assignee = task.getAssignee();
+//                            TcUser user = userService.selectById(assignee);
+//                            if (user!=null){
+//                                name=user.getNickName();
+//                            }
+//                        }
+//                    }
                 }
-                if (StrUtil.isNotBlank(assignee)&&assignee.startsWith("${")){
-                    userTask.setAssignee(getExpressionValue(variables,assignee).toString());
-                }
+                userTask.setName(name);
             }
         }
 
@@ -808,7 +1230,7 @@ public class FlowableServiceImpl implements FlowableService {
         String annotationFontName = "宋体"; // 连线标签字体
 //        ClassLoader customClassLoader = null; // 类加载器
         double scaleFactor = 2.0d; // 比例因子，默认即可
-        boolean drawSequenceFlowNameWithNoLabelDI = true; // 连线标签
+        boolean drawSequenceFlowNameWithNoLabelDI = false; // 连线标签
         // 生成图片
         return defaultProcessDiagramGenerator.generateDiagram(bpmnModel, imageType, highLightedActivities
                 , highLightedFlows, activityFontName, labelFontName, annotationFontName, null,

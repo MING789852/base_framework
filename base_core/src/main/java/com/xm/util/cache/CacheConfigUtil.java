@@ -16,9 +16,16 @@ public class CacheConfigUtil {
         expireParams.setDuration(defaultDuration);
         expireParams.setUnit("h");
         expireParams.setTtl(1);
+        expireParams.setUnLimitTime(false);
 
         //判断是否无限缓存
-        if (StrUtil.isNotBlank(ttlWithUnit)&&!ttlWithUnit.contains("u")) {
+        if (StrUtil.isNotBlank(ttlWithUnit)) {
+            if (ttlWithUnit.contains("u")){
+                expireParams.setUnLimitTime(true);
+                expireParams.setTtl(0);
+                expireParams.setUnit("u");
+                return expireParams;
+            }
             String numberStr = ttlWithUnit.replaceAll("\\D", "");
             //判断数字是否为空
             if (StrUtil.isNotBlank(numberStr)) {

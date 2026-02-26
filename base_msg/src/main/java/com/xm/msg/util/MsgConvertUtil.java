@@ -26,6 +26,15 @@ public class MsgConvertUtil {
         msg.setInfo(tcMsg.getInfo());
         msg.setJudgeFinish(tcMsg.getJudgeFinish());
         msg.setToUserIdList(Collections.singletonList(tcMsg.getUserId()));
+        String groupAtAllStr = tcMsg.getGroupAtAll();
+        Boolean groupAtAll;
+        if (StrUtil.isBlank(groupAtAllStr)){
+            groupAtAll=null;
+        }else {
+            groupAtAll= "1".equals(groupAtAllStr);
+        }
+        msg.setGroupAtAll(groupAtAll);
+        msg.setGroupId(tcMsg.getGroupId());
         return msg;
     }
 
@@ -60,8 +69,13 @@ public class MsgConvertUtil {
             tcMsg.setTitle(msg.getTitle());
             tcMsg.setContent(msg.getContent());
             tcMsg.setInfo(msg.getInfo());
-            tcMsg.setJudgeFinish(msg.getJudgeFinish());
+            tcMsg.setJudgeFinish(msg.isJudgeFinish());
             tcMsg.setUserId(userId);
+            Boolean groupAtAll = msg.getGroupAtAll();
+            if (groupAtAll!=null){
+                tcMsg.setGroupAtAll(groupAtAll?"1":"0");
+            }
+            tcMsg.setGroupId(msg.getGroupId());
 
             msgList.add(tcMsg);
         }

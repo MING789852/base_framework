@@ -4,22 +4,22 @@ import cn.hutool.core.exceptions.ExceptionUtil;
 import cn.hutool.core.io.IoUtil;
 import cn.hutool.core.io.resource.ResourceUtil;
 import cn.hutool.core.util.HexUtil;
-import cn.hutool.crypto.SecureUtil;
 import cn.hutool.crypto.symmetric.SymmetricAlgorithm;
 import cn.hutool.crypto.symmetric.SymmetricCrypto;
 import com.xm.advice.exception.exception.CommonException;
 import lombok.extern.slf4j.Slf4j;
 
+import java.io.InputStream;
 import java.net.URISyntaxException;
 
 @Slf4j
 public class AESUtil {
-    private static SymmetricCrypto aes;
+    private static final SymmetricCrypto aes;
 
 
     static {
-        try {
-            aes = new SymmetricCrypto(SymmetricAlgorithm.AES, IoUtil.readBytes(ResourceUtil.getStream("privateKey")));
+        try(InputStream stream = ResourceUtil.getStream("privateKey")) {
+            aes = new SymmetricCrypto(SymmetricAlgorithm.AES, IoUtil.readBytes(stream));
         } catch (Exception e) {
             String errorMsg=ExceptionUtil.stacktraceToString(e);
             log.error("AES异常=>{}",errorMsg);

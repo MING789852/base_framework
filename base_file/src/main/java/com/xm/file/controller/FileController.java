@@ -21,9 +21,14 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class FileController {
 
-    @GetMapping({"view","mini/view"})
+    @GetMapping({"view"})
     public void view(@RequestParam("id")String id, HttpServletResponse response){
         FileOptionUtil.viewFile(id, response);
+    }
+
+    @GetMapping({"viewWithCacheControl"})
+    public void viewWithCacheControl(@RequestParam("id")String id, HttpServletResponse response){
+        FileOptionUtil.viewFileWithCacheControl(id, response);
     }
 
     @GetMapping("download")

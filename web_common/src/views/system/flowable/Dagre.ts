@@ -1,4 +1,5 @@
 import { DagreLayout, type DagreLayoutOptions } from '@antv/layout';
+import {bpmnTypeEnum} from "@/enums/TaskStatusEnum";
 
 export default class Dagre {
   static pluginName = 'dagre';
@@ -41,12 +42,12 @@ export default class Dagre {
   layout(option = {}) {
     const { nodes, edges, gridSize } = this.lf.graphModel;
     // 为了保证生成的节点在girdSize上，需要处理一下。
-    let nodesep = 40;
-    let ranksep = 40;
-    if (gridSize > 20) {
-      nodesep = gridSize * 2;
-      ranksep = gridSize * 2;
-    }
+    let nodesep = 50;
+    let ranksep = 80;
+    // if (gridSize > 20) {
+    //   nodesep = gridSize * 2;
+    //   ranksep = gridSize * 2;
+    // }
     this.option = {
       type: 'dagre',
       rankdir: 'LR',
@@ -55,7 +56,7 @@ export default class Dagre {
       align: 'DR',
       nodesep,
       ranksep,
-      begin: [120, 120],
+      begin: [200, 200],
       ...option,
     };
     const layoutInstance = new DagreLayout(this.option);
@@ -87,13 +88,13 @@ export default class Dagre {
       // @ts-expect-error: pass node data
       data.y = node.y;
 
-      if (data.type === 'bpmn:userTask'){
+      if ([bpmnTypeEnum.userTask,bpmnTypeEnum.serviceTask].includes(data.type)){
         if (data.text){
           data.text.x = data.x
           data.text.y = data.y
         }
       }
-      if (['bpmn:startEvent','bpmn:endEvent'].includes(data.type)){
+      if ([bpmnTypeEnum.startEvent,bpmnTypeEnum.endEvent].includes(data.type)){
         if (data.text){
           data.text.x = data.x
           data.text.y = data.y + 40

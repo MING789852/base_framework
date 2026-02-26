@@ -22,19 +22,21 @@ public class TcMsg implements Serializable {
     /**
      * 业务类型
      */
-    @Size(max = 50, message = "业务类型最大长度要小于 50")
+    @Size(max = 100, message = "业务类型最大长度要小于 100")
     @NotBlank(message = "业务类型不能为空")
     private String businessType;
 
     /**
      * 业务编码
      */
-    @Size(max = 50, message = "业务编码最大长度要小于 50")
+    @Size(max = 100, message = "业务编码最大长度要小于 100")
     @NotBlank(message = "业务编码不能为空")
     private String businessKey;
 
-
-    @Size(max = 32, message = "消息类型最大长度要小于 32")
+    /**
+     * 消息类型
+     */
+    @Size(max = 50, message = "消息类型最大长度要小于 50")
     @NotBlank(message = "消息类型不能为空")
     private String type;
 
@@ -53,10 +55,9 @@ public class TcMsg implements Serializable {
     private Boolean judgeFinish;
 
     /**
-     * 用户id
+     * 用户
      */
-    @Size(max = 50, message = "用户id最大长度要小于 50")
-    @NotBlank(message = "用户id不能为空")
+    @Size(max = 100, message = "用户最大长度要小于 100")
     private String userId;
 
     /**
@@ -78,6 +79,18 @@ public class TcMsg implements Serializable {
      * 内容
      */
     private String content;
+
+    /**
+     * 群组id
+     */
+    @Size(max = 100, message = "群组id最大长度要小于 100")
+    private String groupId;
+
+    /**
+     * 群组@所有人
+     */
+    @Size(max = 3, message = "群组@所有人最大长度要小于 3")
+    private String groupAtAll;
 
     private static final long serialVersionUID = 1L;
 }

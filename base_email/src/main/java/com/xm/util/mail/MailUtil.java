@@ -1,22 +1,12 @@
 package com.xm.util.mail;
 
 import cn.hutool.core.collection.CollectionUtil;
-import cn.hutool.core.io.IoUtil;
-import cn.hutool.core.util.ArrayUtil;
-import com.xm.advice.exception.exception.CommonException;
+import cn.hutool.core.util.StrUtil;
 import com.xm.annotation.Comment;
-import com.xm.configuration.mail.MailProperty;
-import com.xm.util.bean.SpringBeanUtil;
 import com.xm.util.mail.convert.MailTableValueConvert;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.core.io.ByteArrayResource;
-import org.springframework.mail.javamail.JavaMailSender;
-import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.util.CollectionUtils;
 
-import javax.mail.MessagingException;
-import javax.mail.internet.MimeMessage;
-import java.io.InputStream;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.List;
@@ -24,6 +14,14 @@ import java.util.Map;
 
 @Slf4j
 public class MailUtil {
+
+
+    public static String httpPreWrap(String content){
+        if (StrUtil.isNotBlank(content)){
+            content=StrUtil.format("<div style=\"white-space: pre-wrap\">{}</div>", content);
+        }
+        return content;
+    }
 
     public static <T> List<ModelAndTitleMailMapping> generationFieldNameAndTitleMapping(Class<T> clazz, Map<String, MailTableValueConvert> convertMap){
         Field[] declaredFields=clazz.getDeclaredFields();
@@ -110,11 +108,11 @@ public class MailUtil {
         stringBuilder.append("<table border=\"1\"; cellspacing=\"0\" cellpadding=\"5\">");
         if (CollectionUtils.isEmpty(colNames)){
             log.error("[生成表格]列名不能为空");
-            return null;
+            return "";
         }
         if (CollectionUtils.isEmpty(data)){
             log.error("[生成表格]数据不能为空");
-            return null;
+            return "";
         }
         //设置表头
         stringBuilder.append("<tr>");

@@ -17,7 +17,7 @@ public class XxlJobConfig {
     @Bean
     @ConditionalOnProperty(prefix = "xxl.job", name = "enable", havingValue = "true")
     public XxlJobSpringExecutor xxlJobExecutor() {
-        log.info(">>>>>>>>>>> xxl-job config init.");
+        log.info(">>>>>>>>>>> xxl-job 配置初始化 <<<<<<<<<<<<");
         XxlJobSpringExecutor xxlJobSpringExecutor = new XxlJobSpringExecutor();
         xxlJobSpringExecutor.setAdminAddresses(xxlJobProperty.getAdminAddress());
         xxlJobSpringExecutor.setAppname(xxlJobProperty.getExecutorAppname());

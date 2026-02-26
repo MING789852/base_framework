@@ -4,9 +4,11 @@ import com.xm.auth.domain.entity.TcRouterAction;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
+import java.io.Serializable;
+
 @EqualsAndHashCode(callSuper = true)
 @Data
-public class TcRouterActionTreeNodeVo extends TcRouterAction {
+public class TcRouterActionTreeNodeVo extends TcRouterAction implements Serializable {
     private Boolean isLeaf;
     private String title;
 }

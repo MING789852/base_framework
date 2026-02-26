@@ -153,11 +153,11 @@ public class MinioTemplate {
      * @param objectName 文件名
      * @param stream     流
      */
-    public static void putObject(String bucketName, String objectName, InputStream stream) throws Exception {
+    public static void putObject(String bucketName, String objectName, InputStream stream,long fileSize) throws Exception {
         String contentType=getContentTypeByFileName(objectName);
         client.putObject(
                 PutObjectArgs.builder().bucket(bucketName).object(objectName).stream(
-                                stream,stream.available(),ObjectWriteArgs.MAX_PART_SIZE)
+                                stream,fileSize,ObjectWriteArgs.MAX_PART_SIZE)
                         .contentType(contentType)
                         .build());
     }

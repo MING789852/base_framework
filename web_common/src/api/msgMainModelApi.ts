@@ -17,6 +17,10 @@ class Api implements ApiBase{
         return http.post("/msgMainModel/saveOrUpdateMsg",{data:data})
     }
 
+    finishMsg (data:any) {
+        return http.post("/msgMainModel/finishMsg",{data:data})
+    }
+
     getDictMapping(){
         return http.get<any,HttpResult>("/msgMainModel/getDictMapping")
     }

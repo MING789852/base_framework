@@ -16,16 +16,18 @@
     <result column="assignee_name" jdbcType="VARCHAR" property="assigneeName" />
     <result column="source_node_Id" jdbcType="VARCHAR" property="sourceNodeId" />
     <result column="target_node_Id" jdbcType="VARCHAR" property="targetNodeId" />
-    <result column="content1" jdbcType="VARCHAR" property="content1" />
-    <result column="content2" jdbcType="VARCHAR" property="content2" />
+    <result column="content1" jdbcType="LONGVARCHAR" property="content1" />
+    <result column="content2" jdbcType="LONGVARCHAR" property="content2" />
     <result column="content3" jdbcType="VARCHAR" property="content3" />
     <result column="content4" jdbcType="VARCHAR" property="content4" />
     <result column="element_name" jdbcType="VARCHAR" property="elementName" />
+    <result column="content5" jdbcType="LONGVARCHAR" property="content5" />
+    <result column="content6" jdbcType="LONGVARCHAR" property="content6" />
   </resultMap>
   <sql id="Base_Column_List">
     <!--@mbg.generated-->
     process_definition_key, element_id, process_definition_name, element_type, element_x, 
     element_y, text_x, text_y, assignee, assignee_name, source_node_Id, target_node_Id, 
-    content1, content2, content3, content4, element_name
+    content1, content2, content3, content4, element_name, content5, content6
   </sql>
 </mapper>

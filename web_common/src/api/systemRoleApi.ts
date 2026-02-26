@@ -34,14 +34,21 @@ class Api implements ApiBase{
     return http.post("/role/saveRoleRouterRel",{data:data})
   }
 
-  selectUserAndDeptPageByRoleId = (roleId,query) => {
-    return http.post("/role/selectUserAndDeptPageByRoleId?roleId="+roleId,{data:query})
+  selectUserPageByRoleId = (roleId,query) => {
+    return http.post("/role/selectUserPageByRoleId?roleId="+roleId,{data:query})
+  }
+
+  exportRoleUsersExcel = (roleId,query) => {
+    return http.post("/role/exportRoleUsersExcel?roleId="+roleId,{data:query,responseType:"blob"})
   }
 
   unRelUserAndRoleAll = (roleId,query) => {
     return http.post("/role/unRelUserAndRoleAll?roleId="+roleId,{data:query})
   }
 
+  getRoleUsersColumnProps = () => {
+    return http.get("/role/getRoleUsersColumnProps")
+  }
 
   unRelUserAndRole = (roleId,userId) => {
     return http.get("/role/unRelUserAndRole?roleId="+roleId + '&userId='+userId)

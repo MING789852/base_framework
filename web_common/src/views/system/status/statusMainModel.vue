@@ -41,13 +41,18 @@ const saveOrUpdate = (data) => {
     {prop: 'name', label: '名称',type: QueryTypeEnum.INPUT}
   ]
   let defaultData = ref(data)
-  common.openInputDialog(columns,{},defaultData,(result)=>{
-    common.handleRequestApi(statusMainModelApi.saveOrUpdateData([result.data])).then(res=>{
-      message(res.msg,{type:'success'})
-      commonTableRef.value.getData()
-      result.done()
-    })
-  })
+  let params:OpenInputDialogDefine = {
+    columns: columns,
+    defaultValue: defaultData,
+    callBack: (result) => {
+      common.handleRequestApi(statusMainModelApi.saveOrUpdateData([result.data])).then(res=>{
+        message(res.msg,{type:'success'})
+        commonTableRef.value.getData()
+        result.done()
+      })
+    }
+  }
+  common.openInputDialog(params)
 }
 tableFn.addFn = () => {
   saveOrUpdate({})
@@ -56,12 +61,15 @@ tableFn.rowDblclick=(row: any, column: any, event: Event)=>{
   saveOrUpdate(row)
 }
 tableFn.buttonAction={
-  detail: (row:any)=>{
-    if (common.isStrBlank(row.id)){
-      return message('请保存数据后操作',{type:'error'})
+  actionFn(row: any, propName: string, index: number): void {
+    if (propName === 'detail'){
+      if (common.isStrBlank(row.id)){
+        message('请保存数据后操作',{type:'error'})
+        return
+      }
+      detailFlag.value = true
+      detailRow.value = row
     }
-    detailFlag.value = true
-    detailRow.value = row
   }
 }
 </script>

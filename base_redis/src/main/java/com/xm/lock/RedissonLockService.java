@@ -5,12 +5,14 @@ import com.xm.core.lock.LockService;
 import com.xm.util.bean.SpringBeanUtil;
 import org.redisson.api.RLock;
 import org.redisson.api.RedissonClient;
+import org.springframework.context.annotation.DependsOn;
 import org.springframework.stereotype.Service;
 
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 @Service
+@DependsOn("SpringBeanUtil")
 public class RedissonLockService implements LockService {
     private final static RedissonClient redissonClient;
 
@@ -19,14 +21,51 @@ public class RedissonLockService implements LockService {
     }
 
     @Override
-    public <T> T lock(String lockCode, Supplier<T> executeSupplier, Consumer<Exception> exceptionConsumer) {
-        RLock rLock=redissonClient.getLock(lockCode);
+    public String getLockPrefix() {
+        return "lock:";
+    }
+
+    @Override
+    public <T> T lock(String lockCode, Supplier<T> executeSupplier) {
+        RLock rLock=redissonClient.getLock(getLockPrefix()+lockCode);
         try {
             rLock.lock();
-            return executeSupplier.get();
-        }catch (Exception e){
-            exceptionConsumer.accept(e);
+            if (executeSupplier!=null){
+                return executeSupplier.get();
+            }
             return null;
+        }catch (Exception e){
+            throw new CommonException(e.getMessage());
+        }finally {
+            rLock.unlock();
+        }
+    }
+
+    @Override
+    public <T> T lock(String lockCode, Supplier<T> executeSupplier, Consumer<Exception> exceptionConsumer) {
+        try {
+            return lock(lockCode,executeSupplier);
+        }catch (Exception e){
+            if (exceptionConsumer!=null){
+                exceptionConsumer.accept(e);
+            }
+            return null;
+        }
+    }
+
+    @Override
+    public <T> T tryLock(String lockCode, String lockMsg, Supplier<T> executeSupplier) {
+        RLock rLock=redissonClient.getLock(getLockPrefix()+lockCode);
+        if (!rLock.tryLock()){
+            throw new CommonException(lockMsg);
+        }
+        try {
+            if (executeSupplier!=null){
+                return executeSupplier.get();
+            }
+            return null;
+        }catch (Exception e){
+            throw new CommonException(e.getMessage());
         }finally {
             rLock.unlock();
         }
@@ -34,17 +73,13 @@ public class RedissonLockService implements LockService {
 
     @Override
     public <T> T tryLock(String lockCode, String lockMsg, Supplier<T> executeSupplier, Consumer<Exception> exceptionConsumer) {
-        RLock rLock=redissonClient.getLock(lockCode);
-        if (!rLock.tryLock()){
-            throw new CommonException(lockMsg);
-        }
         try {
-            return executeSupplier.get();
+            return tryLock(lockCode,lockMsg,executeSupplier);
         }catch (Exception e){
-            exceptionConsumer.accept(e);
+            if (exceptionConsumer!=null){
+                exceptionConsumer.accept(e);
+            }
             return null;
-        }finally {
-            rLock.unlock();
         }
     }
 }

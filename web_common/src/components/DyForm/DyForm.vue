@@ -9,28 +9,36 @@ import DyLabel from "@/components/DyForm/DyLabel.vue";
 import DyFile from "@/components/DyForm/DyFile.vue";
 import DyImage from "@/components/DyForm/DyImage.vue";
 import DyMultiSelect from "@/components/DyForm/DyMultiSelect.vue";
+import FormFnClass from "@/class/FormFnClass";
 
 defineSlots<{
   formItem(props: { item: DyFormColumn, index:number}): any
 }>()
-const props = defineProps({
-  //标签宽度
-  labelWith: {type:String,required: false,default: 'auto'},
-  //标签位置
-  labelPosition: {type:String as PropType<"left" | "right" | "top">,required: false,default: 'right'},
-  //行内表单
-  inline: {type:Boolean,required:false,default: false},
-  //表单定义
-  formDefines: {required: true, type: Array<DyFormColumn>, default: []},
-  //控制表单行项显示映射
-  formItemShowMapping : {required: false, type: Object as PropType<Record<string, boolean>>},
-  //是否禁止编辑
-  disableEdit: {type: Boolean, required: false, default: false}
+
+interface DyFormProp {
+  labelWith?:string,
+  labelPosition?:"left" | "right" | "top",
+  inline?: boolean,
+  formDefines: Array<DyFormColumn>,
+  formItemShowMapping?:Record<string, boolean>,
+  disableEdit?: boolean,
+  formFn?:FormFnClass
+}
+
+const props = withDefaults(defineProps<DyFormProp>(), {
+  labelWith:()=>"auto",
+  labelPosition:()=>"right",
+  inline:()=>false,
+  formDefines:()=>[],
+  formItemShowMapping:()=>{return {}},
+  disableEdit:()=>false,
+  formFn:() => new FormFnClass()
 })
 const dictQueryType = defineModel<DictQueryType[]>('dictQueryType',{required: false})
 const uploadMap = defineModel<Map<String,File>>('uploadMap',{required:false})
 const formData = defineModel('formDataProp',{required: false, type: Object})
 const dictMapping = defineModel('dictMapping',{required: false, type: Object, default: {} as Object})
+
 onMounted(()=>{
   if (isNullOrUnDef(dictMapping.value)) {
     dictMapping.value = {}
@@ -77,6 +85,21 @@ const formItemShow = (item:DyFormColumn) => {
 
 const disableEditFn = () => {
   return props.disableEdit
+}
+
+
+const displayDate = (row:any,prop:string,format:string)=>{
+  if (common.isStrBlank(prop)){
+    return ''
+  }
+  if (isNullOrUnDef(row)){
+    return ''
+  }
+  let temp = row[prop]
+  if (common.isStrBlank(temp)){
+    return ''
+  }
+  return common.formatDate(new Date(temp), format)
 }
 </script>
 
@@ -126,11 +149,11 @@ const disableEditFn = () => {
               v-model="formData[item.prop]"
               :placeholder="isNullOrUnDef(item.placeholder)?'':item.placeholder"
               type="date"
-              value-format="YYYY-MM-DD"
+              value-format="YYYY-MM-DD HH:mm:ss"
           />
         </template>
         <template v-else>
-          {{formData[item.prop]}}
+          {{displayDate(formData,item.prop,'yyyy-MM-dd')}}
         </template>
       </el-form-item>
       <el-form-item v-show="formItemShow(item)" v-if="item.type === DyFormColumnTypeEnum.DATE_RANGE" :required="item.required"
@@ -163,7 +186,7 @@ const disableEditFn = () => {
       </el-form-item>
       <el-form-item v-show="formItemShow(item)" v-if="item.type === DyFormColumnTypeEnum.COMMON_SELECT" :required="item.required"
                     :label="item.label">
-        <el-select v-model="formData[item.prop]" :placeholder="isNullOrUnDef(item.placeholder)?'':item.placeholder" filterable>
+        <el-select v-model="formData[item.prop]" :placeholder="isNullOrUnDef(item.placeholder)?'':item.placeholder"  filterable>
           <el-option
               v-for="(value,key) in dictMapping[item.prop]"
               :key="key"
@@ -182,7 +205,7 @@ const disableEditFn = () => {
       </el-form-item>
       <el-form-item v-show="formItemShow(item)" v-if="item.type === DyFormColumnTypeEnum.FILE" :required="item.required"
                     :label="item.label">
-        <dy-file v-model:tableDataProp="formData[item.prop]" v-model:upload-map="uploadMap" />
+        <dy-file v-model:tableDataProp="formData[item.prop]" v-model:upload-map="uploadMap" :file-action="formFn.fileAction" />
       </el-form-item>
       <el-form-item v-show="formItemShow(item)" v-if="item.type === DyFormColumnTypeEnum.LABEL" :required="item.required"
                     :label="item.label">

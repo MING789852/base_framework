@@ -20,23 +20,38 @@ const updatePassword = () => {
     {prop: 'oldPassword', label: '旧密码', type: QueryTypeEnum.INPUT,placeholder:'请输入旧密码', disabled: false},
     {prop: 'newPassword', label: '新密码', type: QueryTypeEnum.INPUT,placeholder:'请输入新密码', disabled: false}
   ]
-  common.openInputDialog(columns, null, null, (result) => {
-    common.handleRequestApi(systemUserApi.updatePassword(result.data)).then(res=>{
-      message('操作成功',{type:'success'})
-      result.done()
-    })
-  })
+  let params:OpenInputDialogDefine = {
+    columns: columns,
+    callBack: (result) => {
+      common.handleRequestApi(systemUserApi.updatePassword(result.data)).then(()=>{
+        message('操作成功',{type:'success'})
+        result.done()
+      })
+    }
+  }
+  common.openInputDialog(params)
 }
 const updateUserInfo = () => {
   let columns: Array<DetailColumnDefine> = [
     {prop: 'email', label: '邮箱', type: QueryTypeEnum.INPUT,placeholder:'请输入邮箱', disabled: false}
   ]
-  common.openInputDialog(columns, null, null, (result) => {
-    common.handleRequestApi(systemUserApi.updateUserInfo(result.data)).then(res=>{
-      message('操作成功',{type:'success'})
-      result.done()
-    })
-  })
+  let currentUserInfo = common.getCurrentUserInfo();
+  let defaultValue = {
+    email: currentUserInfo.email
+  }
+  let params:OpenInputDialogDefine = {
+    columns: columns,
+    defaultValue: defaultValue,
+    callBack: (result) => {
+      common.handleRequestApi(systemUserApi.updateUserInfo(result.data)).then(()=>{
+        message('操作成功',{type:'success'})
+        //更新本地邮件
+        common.updateCurrentUserInfo({email:result.data.email})
+        result.done()
+      })
+    }
+  }
+  common.openInputDialog(params)
 }
 </script>
 

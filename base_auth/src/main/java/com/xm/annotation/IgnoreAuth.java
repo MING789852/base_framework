@@ -6,7 +6,7 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 //方法注解
-@Target({ElementType.METHOD})
+@Target({ElementType.METHOD,ElementType.TYPE})
 //运行时生效
 @Retention(RetentionPolicy.RUNTIME)
 public @interface IgnoreAuth {

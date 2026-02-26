@@ -5,50 +5,111 @@ import com.xm.advice.exception.exception.CommonException;
 import com.xm.advice.exception.exception.UnAuthException;
 import com.xm.auth.domain.entity.TcRole;
 import com.xm.auth.domain.entity.TcRouter;
-import com.xm.auth.domain.entity.TcRouterAction;
 import com.xm.auth.domain.entity.TcUser;
-import com.xm.auth.service.TcRouterActionService;
-import com.xm.auth.service.TcRouterService;
 import com.xm.consts.AuthCacheKey;
+import com.xm.consts.SessionAttr;
 import com.xm.util.auth.params.RequestAction;
-import com.xm.util.bean.SpringBeanUtil;
 import com.xm.util.cache.CacheUtil;
 import lombok.extern.slf4j.Slf4j;
 
+import javax.servlet.http.HttpSession;
 import java.util.ArrayList;
-import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
 
 @Slf4j
 public class UserInfoUtil {
 
-    private static final TcRouterService routerService;
+    /**
+     * 判断是否有指定路由操作权限
+     */
+    public static boolean haveRouterAction(String routerName,String actionName){
+        if (isSuperPrivilege()){
+            return true;
+        }
+        Map<String,String> currentRouterActionByRouterName = getCurrentRouterActionByRouterName(routerName);
+        return currentRouterActionByRouterName.containsKey(actionName);
+    }
 
-    private static final TcRouterActionService routerActionService;
-
-
-    static {
-        routerService=SpringBeanUtil.getBeanByClass(TcRouterService.class);
-        routerActionService=SpringBeanUtil.getBeanByClass(TcRouterActionService.class);
+    public static boolean haveRoleCode(List<String> roleCodeList){
+        if (isSuperPrivilege()){
+            return true;
+        }
+        List<TcRole> currentLoginRoleList = getCurrentLoginRoleBySessionOrToken();
+        if (CollectionUtil.isEmpty(currentLoginRoleList)){
+            return false;
+        }
+        if (CollectionUtil.isEmpty(roleCodeList)){
+            return true;
+        }
+        return currentLoginRoleList.stream().anyMatch(role -> roleCodeList.contains(role.getRoleCode()));
     }
 
     /**
-     * 获取当前路由操作的权限
+     * 获取特定路由操作的权限
      */
-    public static List<TcRouterAction> getCurrentRouterActionByRouterName(String routerName){
-        TcRouter tcRouterByRouterName = routerService.getTcRouterByRouterName(routerName);
-        List<TcRole> currentLoginRoleBySession = getCurrentLoginRoleBySessionOrToken();
-        if (tcRouterByRouterName==null){
-            return new ArrayList<>();
+    public static Map<String,String> getCurrentRouterActionByRouterName(String routerName){
+        Map<String, Map<String, String>> routerActionMapping = getCurrentRouterActionMapping();
+        if (routerActionMapping.containsKey(routerName)){
+            Map<String, String> map = routerActionMapping.get(routerName);
+            if (CollectionUtil.isEmpty(map)){
+                map=new HashMap<>();
+            }
+            return map;
         }
-        if (CollectionUtil.isEmpty(currentLoginRoleBySession)){
-            return new ArrayList<>();
+        return new HashMap<>();
+    }
+
+    /**
+     * 获取路由操作映射
+     * 外层key是路由编码(名称),内层key是路由操作编码，value是路由操作名称
+     */
+    public static Map<String, Map<String, String>> getCurrentRouterActionMapping(){
+        HttpSession currentHttpSession = HttpRequestUtil.getCurrentHttpSession();
+        if (currentHttpSession!=null){
+            Object attribute = currentHttpSession.getAttribute(SessionAttr.attr_routerActionMapKey);
+            if (attribute instanceof Map<?,?>){
+                @SuppressWarnings("unchecked")
+                Map<String, Map<String, String>> currentRouterActionMapping= (Map<String, Map<String, String>>) attribute;
+                return currentRouterActionMapping;
+            }
         }
-        List<String> roleIdList = currentLoginRoleBySession.stream().map(TcRole::getId).collect(Collectors.toList());
-        List<String> routerIdList= Collections.singletonList(tcRouterByRouterName.getId());
-        return routerActionService.getRouterActionByRoleAndRouter(roleIdList,routerIdList);
+        return new HashMap<>();
+    }
+
+    /**
+     * 缓存路由操作映射
+     * 外层key是路由编码(名称),内层key是路由操作编码，value是路由操作名称
+     */
+    public static void initCurrentRouterActionMapping(Map<String, Map<String, String>> currentRouterActionMapping){
+        HttpSession currentHttpSession = HttpRequestUtil.getCurrentHttpSession();
+        if (currentHttpSession!=null){
+            currentHttpSession.setAttribute(SessionAttr.attr_routerActionMapKey,currentRouterActionMapping);
+        }
+    }
+
+
+    public static void initCurrentRouter(List<TcRouter> routerList){
+        HttpSession currentHttpSession = HttpRequestUtil.getCurrentHttpSession();
+        if (currentHttpSession!=null){
+            currentHttpSession.setAttribute(SessionAttr.attr_routerKey,routerList);
+        }
+    }
+
+    public static void initCurrentRole(List<TcRole> roleList){
+        HttpSession currentHttpSession = HttpRequestUtil.getCurrentHttpSession();
+        if (currentHttpSession!=null){
+            currentHttpSession.setAttribute(SessionAttr.attr_roleKey,roleList);
+        }
+    }
+
+    public static void initCurrentUser(TcUser user){
+        HttpSession currentHttpSession = HttpRequestUtil.getCurrentHttpSession();
+        if (currentHttpSession!=null){
+            currentHttpSession.setAttribute(SessionAttr.attr_userKey,user);
+        }
     }
 
     /**

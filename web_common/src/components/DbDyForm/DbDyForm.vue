@@ -49,9 +49,10 @@ watch([formModelId,formInsId], (newDateRange, oldDateRange) => {
   <dy-form v-model:upload-map="uploadMap"
            v-model:form-data-prop="formData"
            v-model:dict-mapping="dictMapping"
+           :label-with="labelWith"
            :form-defines="formDefines" :inline="inline"
            :label-position="labelPosition"
-           :label-with="labelWith" :disable-edit="disableEdit"
+           :disable-edit="disableEdit"
            :dict-query-type="dictQueryType">
     <template #formItem="{item,index}">
       <slot name="formItem" :item="item" :index="index"/>

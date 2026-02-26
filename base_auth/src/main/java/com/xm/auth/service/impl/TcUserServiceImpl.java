@@ -1,5 +1,6 @@
 package com.xm.auth.service.impl;
 
+import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
@@ -14,11 +15,15 @@ import com.xm.auth.domain.vo.UserEnableVo;
 import com.xm.auth.enums.UserTypeEnum;
 import com.xm.auth.mapper.TcUserMapper;
 import com.xm.auth.service.ExternalUserService;
+import com.xm.auth.service.TcUserRoleRelService;
 import com.xm.auth.service.TcUserService;
+import com.xm.auth.service.UserDeptRelService;
 import com.xm.module.core.params.QueryData;
 import com.xm.util.auth.LoginSessionUtil;
+import com.xm.util.auth.LoginUtil;
 import com.xm.util.auth.UserInfoUtil;
 import com.xm.util.auth.params.RequestAction;
+import com.xm.util.bean.SpringBeanUtil;
 import com.xm.util.id.SnowIdUtil;
 import com.xm.util.crypto.aes.AESUtil;
 import com.xm.util.valid.ValidationResult;
@@ -74,7 +79,12 @@ public class TcUserServiceImpl implements TcUserService {
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public String saveOrUpdateData(List<TcUser> list) {
+    public String addSystemUser(List<TcUser> list) {
+        for (TcUser tcUser : list){
+            if (tcUser.getUserType()==null){
+                tcUser.setUserType(UserTypeEnum.SYSTEM.getValue());
+            }
+        }
         return saveOrUpdateData(list,true);
     }
 
@@ -192,6 +202,7 @@ public class TcUserServiceImpl implements TcUserService {
         if (StrUtil.isBlank(email)){
             throw new CommonException("邮箱不能为空");
         }
+        email=email.trim();
         if (!emailPattern.matcher(email).matches()){
             throw new CommonException("邮箱格式错误");
         }
@@ -250,8 +261,29 @@ public class TcUserServiceImpl implements TcUserService {
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public String deleteData(List<TcUser> list) {
-        return TcUserService.super.deleteData(list);
+        if (CollectionUtil.isEmpty(list)){
+            throw new CommonException("数据为空");
+        }
+        list=list.stream().filter(item->StrUtil.isNotBlank(item.getId())).collect(Collectors.toList());
+
+        TcUserRoleRelService tcUserRoleRelService = SpringBeanUtil.getBeanByClass(TcUserRoleRelService.class);
+        UserDeptRelService userDeptRelService = SpringBeanUtil.getBeanByClass(UserDeptRelService.class);
+        for (TcUser tcUser:list){
+            //删除用户
+            String id = tcUser.getId();
+            tcUserMapper.deleteById(id);
+            //删除用户角色关联
+            tcUserRoleRelService.unRelByUserIdList(Collections.singletonList(id));
+            //删除用户部门关联
+            userDeptRelService.delRelatedByUserId(id);
+            //强制退出登录
+            LoginUserVo loginUserVo = new LoginUserVo();
+            BeanUtil.copyProperties(tcUser,loginUserVo);
+            removeLoginUser(Collections.singletonList(loginUserVo));
+        }
+        return "操作成功";
     }
 
     @Override
@@ -267,5 +299,22 @@ public class TcUserServiceImpl implements TcUserService {
         LambdaQueryWrapper<TcUser> lambdaQueryWrapper=new LambdaQueryWrapper<>();
         lambdaQueryWrapper.eq(TcUser::getUsername,userName);
         return tcUserMapper.selectOne(lambdaQueryWrapper);
+    }
+
+    @Override
+    public String resetLoginTry(List<TcUser> list) {
+        if (CollectionUtil.isEmpty(list)){
+            throw new CommonException("数据为空,无法操作");
+        }
+        List<String> usernameList=
+                list.stream().map(TcUser::getUsername)
+                        .filter(StrUtil::isNotBlank).collect(Collectors.toList());
+        if (CollectionUtil.isEmpty(usernameList)){
+            throw new CommonException("数据为空,无法操作");
+        }
+        for (String username:usernameList){
+            LoginUtil.resetTryCount(username);
+        }
+        return "操作成功";
     }
 }

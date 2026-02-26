@@ -1,13 +1,14 @@
-import {buildUUID, debounce, isBoolean, isNullOrUnDef, useCopyToClipboard} from "@pureadmin/utils";
+import {buildUUID, cloneDeep, debounce, isBoolean,isString, isNullOrUnDef, useCopyToClipboard} from "@pureadmin/utils";
 import {addDialog} from "@/components/ReDialog/index";
 import PreviewFile from "@/components/PreviewFile/PreviewFile.vue";
 import DetailForm from "@/components/detailForm/detailForm.vue";
-import {nextTick, type Ref, ref} from "vue";
+import {isRef, ref} from "vue";
 import {message} from "@/utils/message";
-import {getUserInfo} from "@/utils/auth";
+import {DataInfo, getUserInfo, updateTokenProp} from "@/utils/auth";
 import {ElLoading} from "element-plus";
 import showDialog from "@/utils/ConfirmDialog";
-import {addDays, endOfDay, format, parse, startOfDay, startOfYear} from 'date-fns';
+import uploadFileAction from '@/utils/uploadFileAction'
+import {addDays,addMonths, endOfDay,format, parse, startOfDay,startOfMonth,endOfMonth,setHours, setMinutes, setSeconds} from 'date-fns';
 import 'viewerjs/dist/viewer.css'
 import {api as viewerApi} from "v-viewer"
 import router from "@/router";
@@ -16,13 +17,20 @@ import fileApi from '@/api/fileApi'
 import fileApplyApi from '@/api/fileApplyApi'
 import QueryTypeEnum from "@/enums/QueryTypeEnum";
 import {useTimeoutFn} from "@vueuse/core";
+import {onBeforeRouteUpdate, RouteRecordRaw, useRoute} from "vue-router";
+import _ from 'lodash'
+import ColumnTypeEnum from "@/enums/ColumnTypeEnum";
+import FormFnClass from "@/class/FormFnClass";
+
+
 let env = import.meta.env
-const {copied, update} = useCopyToClipboard();
+const {copied, update,clipboardValue} = useCopyToClipboard();
 
 // https://cn.vitejs.dev/guide/features.html#glob-import
 //处理业务模块
 const rootViewModulesRoutes = import.meta.glob("/src/views/**/*.{vue,tsx}");
 const rootComponentModulesRoutes = import.meta.glob("/src/components/**/*.{vue,tsx}");
+const rootLayoutModulesRoutes  =  import.meta.glob("/src/layout/**/*.{vue,tsx}");
 //处理公共模块
 const unHandleCommonViewModulesRoutes = import.meta.glob("@/views/**/*.{vue,tsx}");
 const unHandleCommonComponentModulesRoutes = import.meta.glob("@/components/**/*.{vue,tsx}");
@@ -48,14 +56,17 @@ class Common {
 
     private isLoading = false;
 
-    private routerActionMapping;
+    private loadingCount = 0;
 
     private isNumberReg = /^([+-]?(0|([1-9]\d*)))(\.\d+)?$/
 
     private isMobileReg = /(phone|pad|pod|iPhone|iPod|ios|iPad|Android|Mobile|BlackBerry|IEMobile|MQQBrowser|JUC|Fennec|wOSBrowser|BrowserNG|WebOS|Symbian|Windows Phone)/i
 
+    private routerReadyListenerMap: Map<string,Function> = new Map()
+    private pathAndRouterMap:Map<string,RouteRecordRaw> = new Map()
+    private nameAndRouterMap:Map<string|symbol,RouteRecordRaw> = new Map()
+
     constructor() {
-        console.log('common初始化')
     }
 
     public static getInstance() {
@@ -65,16 +76,62 @@ class Common {
         return Common.instance
     }
 
-    formatDate(date: Date | number, formatStr: string): string {
-        return format(date, formatStr);
+    addRouterReadyListener (listenerName:string,listenerFn: Function){
+        this.routerReadyListenerMap.set(listenerName,listenerFn)
+    }
+
+    notifyRouterReady() {
+        this.routerReadyListenerMap.forEach((listenerFn,listenerName)=>{
+            listenerFn()
+        })
+    }
+
+    addPathAndRouterMap(path:string,router:RouteRecordRaw) {
+        this.pathAndRouterMap.set(path,router)
+    }
+
+    addNameAndRouterMap(name:string|symbol,router:RouteRecordRaw) {
+        this.nameAndRouterMap.set(name,router)
+    }
+
+    getRouterByPath (path:string) {
+        return this.pathAndRouterMap.get(path)
+    }
+
+    formatDate(date: Date | number, formatStr?: string): string {
+        if (isNullOrUnDef(formatStr)){
+            return format(date, 'yyyy-MM-dd HH:mm:ss')
+        }else {
+            return format(date, formatStr);
+        }
+    }
+
+    parseDate(dateStr: string, formatStr?: string){
+        if (isNullOrUnDef(formatStr)){
+            return parse(dateStr, 'yyyy-MM-dd HH:mm:ss', new Date())
+        }else {
+            return parse(dateStr, formatStr, new Date())
+        }
     }
 
     addDays(date: Date | number, amount: number) {
         return addDays(date, amount)
     }
 
-    startOfYearStr(dateStr: string, formatStr: string) {
-        return this.formatDate(startOfYear(parse(dateStr, formatStr, new Date())), formatStr)
+    setTime(date: Date | number, hour:number, minute:number, second:number){
+       return  setSeconds(setMinutes(setHours(date,hour),minute),second)
+    }
+
+    addMonths(date: Date | number, amount: number) {
+        return addMonths(date, amount)
+    }
+
+    startOfMonth(date: Date | number){
+        return startOfMonth(date)
+    }
+
+    endOfMonth (date: Date | number) {
+        return endOfMonth(date)
     }
 
     startOfDay(date: Date | number) {
@@ -86,28 +143,23 @@ class Common {
     }
 
     getCurrentRouteQuery() {
-        return router.currentRoute.value.query
+        let query = router.currentRoute.value.query
+        return query??{}
+    }
+
+    handleFlowableShow(callBack:(id:any)=>void) {
+        let currentRouteQuery = this.getCurrentRouteQuery()
+        let type = currentRouteQuery.type
+        let id = currentRouteQuery.id
+        if (type === 'viewDetail'){
+            callBack?.(id)
+        }
     }
 
     getFileExtName(fileName: string) {
         const splitFileName = fileName.split('.')
         //获取末尾后缀
         return splitFileName[splitFileName.length - 1].toLowerCase()
-    }
-
-    getMonthStartAndEnd(date = new Date()) {
-        const year = date.getFullYear();
-        const month = date.getMonth(); // 从0开始的月份索引
-        const day = 1; // 月初
-        const start = new Date(year, month, day);
-
-        const nextMonth = new Date(year, month + 1, 0); // 下个月的天数
-        const end = new Date(year, month, nextMonth.getDate()); // 当前月份的月尾日期
-
-        return {
-            start,
-            end
-        };
     }
 
     isMobile() {
@@ -131,8 +183,8 @@ class Common {
         return allViewVueList
     }
 
-    getAllVue() {
-        return allVueList
+    getLayoutVue(){
+        return rootLayoutModulesRoutes
     }
 
     getVue(key: string) {
@@ -171,23 +223,44 @@ class Common {
     }
 
     isEmptyArr(value: any[]) {
-        if (isNullOrUnDef(value) || value.length === 0) {
-            return true
-        } else {
-            return false
-        }
+        return isNullOrUnDef(value) || value.length === 0;
     }
 
     isStrBlank(value: string) {
         if (isNullOrUnDef(value)) {
             return true
         } else {
-            return value.trim() === '';
+            if (isString(value)){
+                return value.trim() === '';
+            }
+            return false
         }
     }
 
     isNumber(value: any) {
         return typeof value === "number";
+    }
+
+    isPromiseLike<T>(value: unknown): value is PromiseLike<T> {
+        return (
+            value instanceof Promise ||
+            (typeof value === 'object' && value !== null && 'then' in value && typeof (value as any).then === 'function')
+        )
+    }
+
+    getReturnDataPromiseLike(value: any){
+        return new Promise<any>(async (resolve) => {
+            if (isNullOrUnDef(value)){
+                resolve(value)
+            }
+            if (this.isPromiseLike(value)) {
+                value.then(res=>{
+                    resolve(res)
+                })
+            } else {
+                resolve(value)
+            }
+        })
     }
 
     isString(value: any) {
@@ -199,12 +272,23 @@ class Common {
         return copied.value
     }
 
-    showGlobalLoading() {
-        if (this.isLoading) {
-            return
+    getCopyText() {
+        return clipboardValue.value
+    }
+
+    showGlobalLoading(callback?: () => void) {
+        this.loadingCount++;
+        // 如果Loading尚未显示，则创建新的实例
+        if (!this.isLoading) {
+            this.isLoading = true
+            this.loadingInstance = ElLoading.service({fullscreen: true, body: true, customClass: 'pure-loading'})
         }
-        this.loadingInstance = ElLoading.service({fullscreen: true, body: true, customClass: 'pure-loading'})
-        this.isLoading = true
+        if (!isNullOrUnDef(callback)) {
+            //确保遮罩能展示
+            setTimeout(() => {
+                callback()
+            }, 100)
+        }
     }
 
     judgeIsLoading() {
@@ -217,12 +301,22 @@ class Common {
         }
     }
 
-    async closeGlobalLoading() {
-        // this.loadingInstance.close()
-        // this.isLoading = false
-        await nextTick()
-        this.loadingInstance.close()
-        this.isLoading = false
+    closeGlobalLoading(callback?: () => void) {
+        // 确保计数器不会变为负数
+        if (this.loadingCount > 0) {
+            this.loadingCount--;
+        }
+        // 只有当计数器归零时，才真正关闭Loading
+        if (this.loadingCount === 0 && this.isLoading && this.loadingInstance) {
+            this.loadingInstance.close()
+            this.isLoading = false
+        }
+        if (!isNullOrUnDef(callback)) {
+            //确保遮罩能关闭
+            setTimeout(() => {
+                callback()
+            }, 100)
+        }
     }
 
     handleResponsePage(tableRefValue: any, data: any) {
@@ -241,7 +335,7 @@ class Common {
                 } else {
                     message(res.msg, {type: 'error'})
                 }
-            }).finally(() => {
+            }).finally(async () => {
                 this.closeGlobalLoading()
             })
         })
@@ -251,23 +345,23 @@ class Common {
         return getUserInfo()
     }
 
-    initRouterActionMapping(routerActionMapping) {
-        this.routerActionMapping = routerActionMapping
+    updateCurrentUserInfo(userInfo: DataInfo<number>) {
+        updateTokenProp(userInfo)
     }
 
-    authActionCode(routerActionCode: string): boolean {
-        var currentUserInfo = this.getCurrentUserInfo();
+    authActionCodeWithRouterName(routerName: string, routerActionCode: string):boolean{
+        let currentUserInfo = this.getCurrentUserInfo();
         if (isNullOrUnDef(currentUserInfo)) {
             return false
         }
         if (currentUserInfo.username === 'admin') {
             return true
         }
-        let routerName = router.currentRoute.value.name
-        if (isNullOrUnDef(this.routerActionMapping)) {
+        let userInfo = getUserInfo();
+        if (isNullOrUnDef(userInfo.routerActionMapping)) {
             return false
         }
-        let routerAction = this.routerActionMapping[routerName]
+        let routerAction = userInfo.routerActionMapping[routerName]
         if (isNullOrUnDef(routerAction)) {
             return false
         }
@@ -275,7 +369,11 @@ class Common {
         return !isNullOrUnDef(action);
     }
 
-    authUserButton(userNameList: Array<string>): boolean {
+    authActionCode(routerActionCode: string): boolean {
+        let routerName = router.currentRoute.value.name as string
+        return this.authActionCodeWithRouterName(routerName, routerActionCode)
+    }
+    authUserCode(userNameList: Array<string>): boolean {
         let userInfo = this.getCurrentUserInfo()
         if (isNullOrUnDef(userInfo)) {
             return false
@@ -290,8 +388,7 @@ class Common {
         }
         return false
     }
-
-    authRoleButton(roleList: Array<string>): boolean {
+    authRoleCode(roleList: Array<string>): boolean {
         let userInfo = this.getCurrentUserInfo()
         if (isNullOrUnDef(userInfo)) {
             return false
@@ -303,6 +400,77 @@ class Common {
             return userInfo.roles.filter(item => roleList.includes(item)).length > 0;
         }
         return false
+    }
+
+    //把level类型都拍成一级
+    columnsToIndexColumn(columns:ColumnDefine []):ColumnDefine[]{
+        let newColumns:ColumnDefine[] = []
+        if (this.isEmptyArr(columns)){
+            return newColumns
+        }else {
+            columns.forEach((value)=>{
+                if (value.type!==ColumnTypeEnum.LEVEL){
+                    newColumns.push(cloneDeep(value))
+                }else {
+                    newColumns = [...newColumns,...this.columnsToIndexColumn(value.children)]
+                }
+            })
+            return newColumns
+        }
+    }
+
+    //把表格列类型转化成弹窗类型
+    convertColumnTypeToDialogType(columns:ColumnDefine []):DetailColumnDefine[]{
+        let dialogDetailColumns:Array<DetailColumnDefine> =[]
+        //所有level拍成一级
+        let newColumns = this.columnsToIndexColumn(columns)
+        //开始转换columns为弹窗详情DetailColumnDefine
+        newColumns.forEach((value:ColumnDefine)=>{
+            let type
+            if ([ColumnTypeEnum.EDIT_INPUT,ColumnTypeEnum.INPUT].map(item=>item.toString()).includes(value.type)){
+                type=QueryTypeEnum.INPUT
+            }
+            if ([ColumnTypeEnum.EDIT_INPUT_AREA,ColumnTypeEnum.AREA_INPUT].map(item=>item.toString()).includes(value.type)){
+                type=QueryTypeEnum.AREA_INPUT
+            }
+            if ([ColumnTypeEnum.EDIT_OPTION,ColumnTypeEnum.OPTION].map(item=>item.toString()).includes(value.type)){
+                type=QueryTypeEnum.OPTION
+            }
+            if ([ColumnTypeEnum.EDIT_DATE,ColumnTypeEnum.DATE].map(item=>item.toString()).includes(value.type)){
+                type=QueryTypeEnum.DATE
+            }
+            if ([ColumnTypeEnum.EDIT_DATE_TIME].map(item=>item.toString()).includes(value.type)){
+                type=QueryTypeEnum.DATE_TIME
+            }
+            if ([ColumnTypeEnum.COMMON].map(item=>item.toString()).includes(value.type)){
+                type=QueryTypeEnum.COMMON
+            }
+            if ([ColumnTypeEnum.COMMON_OVER].map(item=>item.toString()).includes(value.type)){
+                type=QueryTypeEnum.COMMON_OVER
+            }
+            if ([ColumnTypeEnum.IMG_LIST].map(item=>item.toString()).includes(value.type)){
+                type=QueryTypeEnum.IMG_LIST
+            }
+            if (!isNullOrUnDef(type)){
+                dialogDetailColumns.push({
+                    prop: value.prop,
+                    label: value.label,
+                    type: type
+                })
+            }
+        })
+        return dialogDetailColumns
+    }
+
+    handleExportExcel(request: Promise<any>) {
+        this.showGlobalLoading()
+        request.then((res:Blob) => {
+            this.handleBlob(res)
+        }).catch(() => {
+            message('请求失败', {type: 'error'})
+        }).finally(() => {
+            this.closeGlobalLoading()
+        })
     }
 
     handleBlob(res: Blob, downloadName?: string) {
@@ -335,22 +503,23 @@ class Common {
      * @param value 要设置的值
      */
     setNestedProperty(object: Object, path: string, value: any) {
-        // 若有 '[',']'，则替换成将 '[' 替换成 '.',去掉 ']'
-        let pathList = path.replace(/\[/g, '.').replace(/]/g, '').split('.')
-        if (typeof object !== 'object') return object;
-        pathList.reduce((o, k, i, _) => {
-            if (i === _.length - 1) { // 若遍历结束直接赋值
-                o[k] = value
-                return null
-            } else if (k in o) { // 若存在对应路径，则返回找到的对象，进行下一次遍历
-                return o[k]
-            } else { // 若不存在对应路径，则创建对应对象，若下一路径是数字，新对象赋值为空数组，否则赋值为空对象
-                o[k] = /^[0-9]{1,}$/.test(_[i + 1]) ? [] : {}
-                return o[k]
-            }
-        }, object)
-        // 返回object；
-        return object;
+        // // 若有 '[',']'，则替换成将 '[' 替换成 '.',去掉 ']'
+        // let pathList = path.replace(/\[/g, '.').replace(/]/g, '').split('.')
+        // if (typeof object !== 'object') return object;
+        // pathList.reduce((o, k, i, _) => {
+        //     if (i === _.length - 1) { // 若遍历结束直接赋值
+        //         o[k] = value
+        //         return null
+        //     } else if (k in o) { // 若存在对应路径，则返回找到的对象，进行下一次遍历
+        //         return o[k]
+        //     } else { // 若不存在对应路径，则创建对应对象，若下一路径是数字，新对象赋值为空数组，否则赋值为空对象
+        //         o[k] = /^[0-9]{1,}$/.test(_[i + 1]) ? [] : {}
+        //         return o[k]
+        //     }
+        // }, object)
+        // // 返回object；
+        // return object;
+        return _.set(object, path, value)
     }
 
     /**
@@ -359,41 +528,58 @@ class Common {
      * @param defaultValue
      */
     getNestedProperty(object: Object, path: string, defaultValue?: any) {
-        // 若有 '[',']'，则替换成将 '[' 替换成 '.',去掉 ']'
-        let pathList = path.replace(/\[/g, '.').replace(/]/g, '').split('.')
-        // 判断 object 是否是数组或者对象，否则直接返回默认值 defaultValue
-        if (typeof object !== 'object') return defaultValue
-        // 沿着路径寻找到对应的值，未找到则返回默认值 defaultValue
-        return pathList.reduce((o, k) => (o || {})[k], object) || defaultValue
+        //
+        // // 若有 '[',']'，则替换成将 '[' 替换成 '.',去掉 ']'
+        // let pathList = path.replace(/\[/g, '.').replace(/]/g, '').split('.')
+        // // 判断 object 是否是数组或者对象，否则直接返回默认值 defaultValue
+        // if (typeof object !== 'object') return defaultValue
+        // // 沿着路径寻找到对应的值，未找到则返回默认值 defaultValue
+        // return pathList.reduce((o, k) => (o || {})[k], object) || defaultValue
+        return  _.get(object, path, defaultValue)
     }
 
-    openInputDialog(columns: Array<DetailColumnDefine>, dictList: any, defaultValue?: Ref<any>,
-                    callBack?: (result: InputDialogResult) => void,
-                    openDialogCallBack?: ()=>void) {
-        let data: any
+    openInputDialog(params:OpenInputDialogDefine) {
+        let defaultValue = params.defaultValue
+        let dictMapping = params.dictMapping
         if (isNullOrUnDef(defaultValue)) {
-            data = ref({})
-        } else {
-            data = defaultValue
+            defaultValue = ref({})
         }
-        if (isNullOrUnDef(dictList)) {
-            dictList = {}
+        if (isNullOrUnDef(dictMapping)) {
+            dictMapping = ref({})
         }
-        let width
-        if (this.isMobile()) {
-            width = "90%"
-        } else {
-            width = "30%"
+        let width = params.width
+        if (this.isStrBlank(width)){
+            if (this.isMobile()) {
+                width = "90%"
+            } else {
+                width = "40%"
+            }
         }
-        console.log(width)
+        let formFn = params.formFn
+        if (isNullOrUnDef(formFn)){
+            formFn = new FormFnClass()
+        }
+        let uploadMap=params.uploadMap
+        if (isNullOrUnDef(uploadMap)){
+            uploadMap = new Map<String,File>()
+        }
+        let deleteFileIdList =params.deleteFileIdList
+        if (isNullOrUnDef(deleteFileIdList)){
+            deleteFileIdList = []
+        }
         addDialog({
+            top: '3vh',
             width: width,
             title: "操作",
             props: {
-                columns: columns,
-                propData: data,
-                dictList: dictList
+                columns: params.columns,
+                propData: isRef(defaultValue)?defaultValue:ref(defaultValue),
+                dictMapping: isRef(dictMapping)?dictMapping:ref(dictMapping),
+                uploadMap: isRef(uploadMap)?uploadMap:ref(uploadMap),
+                deleteFileIdList: isRef(deleteFileIdList)?deleteFileIdList:ref(deleteFileIdList),
+                formFn:formFn
             },
+            footerButtons: params.footerButtons,
             contentRenderer: () => DetailForm,
             beforeSure(done, {options}) {
                 let data: any = options.props.propData
@@ -401,32 +587,21 @@ class Common {
                     data: data,
                     done: done
                 }
-                callBack(result)
+                params.callBack?.(result)
             },
-            open({ options, index }) {
-                if (!isNullOrUnDef(openDialogCallBack)) {
-                    openDialogCallBack()
-                }
+            open({ }) {
+                params.openDialogCallBack?.()
             }
         })
     }
 
-    showMsgDialog(msg: String) {
-        return showDialog(msg)
+    showMsgDialog(msg: String, width?:string) {
+        return showDialog(msg,width)
     }
 
 
     uploadFile(callBack: (e: Event) => void, multiple: boolean, accept?: string) {
-        let inputObj = document.createElement('input')
-        inputObj.type = 'file'
-        if (!isNullOrUnDef(accept)) {
-            inputObj.accept = accept
-        }
-        inputObj.multiple = multiple
-        inputObj.onchange = (e: Event) => {
-            callBack(e)
-        }
-        inputObj.click()
+        uploadFileAction.uploadFile(callBack, multiple, accept)
     }
 
 
@@ -434,26 +609,27 @@ class Common {
         return window.URL.createObjectURL(file)
     }
 
+    buildUrl(baseUrl: string, obj: object){
+        let parameters = '';
+        let url = '';
+        for (const key in obj) {
+            parameters += key + '=' + encodeURIComponent(obj[key]) + '&';
+        }
+        parameters = parameters.replace(/&$/, '');
+        if (/\?$/.test(baseUrl)) {
+            url = baseUrl + parameters;
+        } else {
+            url = baseUrl.replace(/\/?$/, '?') + parameters;
+        }
+        return url;
+    }
+
+    jumpResultPage(params?:JumpResultPageParam){
+        return router.push(this.buildUrl('/resultWithAutoClose',params??{}))
+    }
 
     revokeObjectURLByUrl(url: string) {
         return window.URL.revokeObjectURL(url)
-    }
-
-    readBlobText(blob:Blob,callBack:(text)=>void){
-        if (isNullOrUnDef(blob)){
-            callBack('')
-            return
-        }
-        if (!(blob instanceof Blob)){
-            callBack('')
-            return
-        }
-        const reader = new FileReader();
-        reader.onload = (e)=>{
-            const text = e.target.result
-            callBack(text)
-        }
-        reader.readAsText(blob,'UTF-8')
     }
 
     getTempFilePrefix() {
@@ -572,7 +748,7 @@ class Common {
                         this.applyFileAuth(httpResult.data)
                     }
                 }
-            }).finally(()=>{
+            }).finally(async () => {
                 this.closeGlobalLoading()
             })
         },1000,true)()
@@ -625,16 +801,20 @@ class Common {
                             {prop: 'applyRemark', label: '申请备注',type: QueryTypeEnum.AREA_INPUT},
                         ]
                         useTimeoutFn(()=>{
-                            this.openInputDialog(columns,null,null,(dialogResult)=>{
-                                let data = {
-                                    applyRemark: dialogResult.data.applyRemark,
-                                    fileIdList: result.newApplyFileIdList
+                            let params:OpenInputDialogDefine = {
+                                columns: columns,
+                                callBack: (dialogResult)=>{
+                                    let data = {
+                                        applyRemark: dialogResult.data.applyRemark,
+                                        fileIdList: result.newApplyFileIdList
+                                    }
+                                    this.handleRequestApi(fileApplyApi.fileApply(data)).then(()=>{
+                                        message('操作成功',{type:'success'})
+                                        dialogResult.done()
+                                    })
                                 }
-                                this.handleRequestApi(fileApplyApi.fileApply(data)).then(()=>{
-                                    message('操作成功',{type:'success'})
-                                    dialogResult.done()
-                                })
-                            })
+                            }
+                            this.openInputDialog(params)
                         },300)
                     })
                 }
@@ -715,6 +895,11 @@ class Common {
         return this.urlWithAuth(url)
     }
 
+    getViewUrlWithCacheControlByFileId(id: string){
+        let url =  window.location.origin  + this.getEnv().VITE_API_PATH +  '/file/viewWithCacheControl?id=' + id
+        return this.urlWithAuth(url)
+    }
+
     openUrl(url: string) {
         window.open(url, '_blank')
     }
@@ -754,7 +939,6 @@ class Common {
                 }
             }
             worker.onerror = (e) => {
-                console.log(e)
                 reject(e.message)
             }
             worker.postMessage({chunkList: chunkList})
@@ -775,7 +959,7 @@ class Common {
             let chunkSize = 1024 * 1024 * 10
             this.showGlobalLoading()
             let allFileSize = 0
-            uploadMap.forEach((value, key) => {
+            uploadMap.forEach((value) => {
                 allFileSize = allFileSize + value.size
             })
             //已上传文件大小
@@ -879,6 +1063,24 @@ class Common {
             receiveResultFn = null
             calculateUploadProgress = null
             return tempIdAndFileIdMap
+        }
+    }
+
+    addUrlChangeForceRefreshListener(){
+        onBeforeRouteUpdate((to, from, next) => {
+            console.log('强制刷新页面')
+            // 相同路径时的处理
+            window.location.reload()
+        })
+    }
+
+    showLog (msg) {
+        if (msg instanceof Error) {
+            this.showMsgDialog(msg.stack)
+        } else if (msg instanceof String){
+            this.showMsgDialog(msg)
+        }else {
+            this.showMsgDialog(JSON.stringify(msg))
         }
     }
 }

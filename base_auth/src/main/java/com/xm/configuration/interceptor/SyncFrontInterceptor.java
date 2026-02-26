@@ -27,6 +27,11 @@ public class SyncFrontInterceptor implements HandlerInterceptor {
         // 判断是否直接放行
         HandlerMethod handlerMethod=(HandlerMethod)handler;
         Method method=handlerMethod.getMethod();
+        Class<?> controllerClass = handlerMethod.getBeanType();
+        if (controllerClass.isAnnotationPresent(IgnoreAuth.class)) {
+            log.info("执行同步url拦截,url->{},成功->IgnoreAuth", request.getRequestURI());
+            return true;
+        }
         if (method.isAnnotationPresent(IgnoreAuth.class)) {
             log.info("执行同步url拦截,url->{},成功->IgnoreAuth", request.getRequestURI());
             return true;

@@ -40,6 +40,7 @@ export type userType = {
   username?: string;
   nickName?: string;
   roles?: Array<string>;
+  routerActionMapping?:Record<string, Record<string,string>>;
   isRemembered?: boolean;
   loginDay?: number;
   loginType?: number;

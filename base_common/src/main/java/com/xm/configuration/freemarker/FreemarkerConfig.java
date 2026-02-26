@@ -2,6 +2,9 @@ package com.xm.configuration.freemarker;
 
 
 import freemarker.cache.ClassTemplateLoader;
+import freemarker.cache.MultiTemplateLoader;
+import freemarker.cache.StringTemplateLoader;
+import freemarker.cache.TemplateLoader;
 import freemarker.template.Configuration;
 import freemarker.template.TemplateExceptionHandler;
 import org.springframework.context.annotation.Bean;
@@ -22,8 +25,15 @@ public class FreemarkerConfig {
         //打包成jar不能使用File读取jar里面的资源，需要使用流
 //        Resource resource = new ClassPathResource("template");
 //        cfg.setDirectoryForTemplateLoading(resource.getFile());
-        cfg.setTemplateLoader(new ClassTemplateLoader(
-                this.getClass().getClassLoader(),  "/template"));
+
+        //配置字符串模板加载器（用于渲染动态字符串模板）
+        StringTemplateLoader stringTemplateLoader = new StringTemplateLoader();
+
+        //配置模板加载器
+        ClassTemplateLoader classTemplateLoader = new ClassTemplateLoader(
+                this.getClass().getClassLoader(), "/template");
+
+        cfg.setTemplateLoader(new MultiTemplateLoader(new TemplateLoader[]{stringTemplateLoader, classTemplateLoader}));
 
         // Set the preferred charset template files are stored in. UTF-8 is
         // a good choice in most applications:

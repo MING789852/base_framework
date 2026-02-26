@@ -12,4 +12,9 @@ public class FileProperty {
     private String type;
     private String path;
     private Boolean auth;
+    //是否允许重复上传(md5)
+    //【不允许重复上传】使用MD5校验文件是否存在
+    //【允许重复上传】不使用MD5校验文件是否存在
+    //默认不允许重复上传
+    private Boolean allowRepeatUpload=false;
 }

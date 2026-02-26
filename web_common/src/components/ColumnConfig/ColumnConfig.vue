@@ -1,6 +1,6 @@
 <script setup lang="ts">
 
-import {onMounted, ref, watch} from "vue";
+import {computed, onMounted, ref} from "vue";
 import { VueDraggable } from 'vue-draggable-plus'
 import {cloneDeep, isNullOrUnDef} from "@pureadmin/utils";
 import common from "@/utils/common";
@@ -8,7 +8,6 @@ import columnConfigApi from "@/api/columnConfigApi";
 import {message} from "@/utils/message";
 
 interface ColumnConfig {
-  inputDisabledList?: InputDisabled,
   //组名称
   // groupName: string,
   //是否可排序
@@ -25,7 +24,6 @@ interface ColumnConfig {
   global?: boolean,
 }
 const props = withDefaults(defineProps<ColumnConfig>(), {
-  inputDisabledList: ()=>({} as InputDisabled),
   sortableEdit: false,
   title: '列配置',
   saveDataBase: true,
@@ -36,26 +34,38 @@ const groupName = defineModel<string>('groupName',{required: true})
 const showFlag = defineModel<boolean>('showFlag',{required: true})
 const defaultColumnsDataProp = defineModel<ColumnDefine[]>("defaultColumns",{required:false})
 const columnsDataProp = defineModel<ColumnDefine[]>("columns",{required:true})
-const columnsData = ref([])
+const columnsData = computed({
+  get() {
+    let cloneColumns:ColumnDefine[]=cloneDeep(columnsDataProp.value)
+    cloneColumns.forEach((item)=>{
+      if (isNullOrUnDef(item['show'])){
+        item['show'] = true
+      }
+      if (isNullOrUnDef(item['fixed'])){
+        item['fixed'] = false
+      }
+      if (isNullOrUnDef(item['sortable'])){
+        item['sortable'] = false
+      }
+    })
+    return cloneColumns
+  },
+  set(value) {
+    columnsDataProp.value = value
+  }
+})
 const emits=defineEmits(['save'])
 
-watch(columnsDataProp,()=>{
-  cloneData()
-})
-
-const cloneData=()=>{
-  columnsData.value = cloneDeep(columnsDataProp.value)
-}
 
 const loadColumnsConfig = async (defaultColumns?:ColumnDefine[],groupNameParams?:string) => {
   //加载列配置
   let data = {
-    defaultColumns: isNullOrUnDef(defaultColumns)?columnsDataProp.value:defaultColumns,
+    defaultColumns: isNullOrUnDef(defaultColumns)?columnsData.value:defaultColumns,
     groupName: isNullOrUnDef(groupNameParams)?groupName.value:groupNameParams,
     global: props.global
   }
   let configRes = await common.handleRequestApi(columnConfigApi.getColumnPropsConfig(data))
-  columnsDataProp.value = configRes.data
+  columnsData.value = configRes.data
   return configRes.data
 }
 
@@ -64,7 +74,6 @@ onMounted(() => {
   if (!isNullOrUnDef(props.initFn)) {
     props.initFn()
   } else {
-    cloneData()
     if (props.initLoadDataBase){
       loadColumnsConfig()
     }
@@ -79,7 +88,7 @@ const reset = () => {
     }
     common.handleRequestApi(columnConfigApi.resetColumnPropsConfig(data)).then(()=>{
       message('操作成功',{type:'success'})
-      columnsDataProp.value = defaultColumnsDataProp.value
+      columnsData.value = defaultColumnsDataProp.value
       emits('save',defaultColumnsDataProp.value)
       showFlag.value = false
     })
@@ -95,7 +104,7 @@ const save = ()=>{
     }
     common.handleRequestApi(columnConfigApi.saveColumnPropsConfig(data)).then(()=>{
       message('操作成功',{type:'success'})
-      columnsDataProp.value = cloneConfig
+      columnsData.value = cloneConfig
       emits('save',cloneConfig)
       showFlag.value = false
     })

@@ -1,19 +1,20 @@
 package com.xm.core.params;
 
+import com.xm.core.consts.ColumnPropsType;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
 import java.util.List;
 
 @Data
+@NoArgsConstructor
 public class ColumnProps implements Serializable {
-
-    public ColumnProps() {
-    }
 
     public ColumnProps(String label, String prop) {
         this.label = label;
         this.prop = prop;
+        this.type = ColumnPropsType.COMMON;
         this.show = true;
     }
 
@@ -22,6 +23,14 @@ public class ColumnProps implements Serializable {
         this.prop = prop;
         this.type = type;
         this.show = true;
+    }
+
+    public ColumnProps(String label, String prop, String type,List<ColumnProps> children) {
+        this.label = label;
+        this.prop = prop;
+        this.type = type;
+        this.show = true;
+        this.children = children;
     }
 
     public ColumnProps(String label, String prop, String type,Boolean show) {
@@ -37,6 +46,25 @@ public class ColumnProps implements Serializable {
         this.type = type;
         this.show = true;
         this.width = width;
+    }
+
+    public ColumnProps(String label, String prop, String type,String width,boolean fixed) {
+        this.label = label;
+        this.prop = prop;
+        this.type = type;
+        this.fixed = fixed;
+        this.show = true;
+        this.width = width;
+    }
+
+    public ColumnProps(String label, String prop, String type,String queryType,String queryCondition) {
+        this.label = label;
+        this.prop = prop;
+        this.type = type;
+        this.show = true;
+        this.query=true;
+        this.queryType = queryType;
+        this.queryCondition = queryCondition;
     }
 
     public ColumnProps(String label, String prop, String type,String width,String queryType,String queryCondition) {

@@ -61,9 +61,10 @@ public class DataSourceConfig {
         druidDataSource.setMaxWait(60000);
         // 配置间隔多久才进行一次检测，检测需要关闭的空闲连接，单位是毫秒
         druidDataSource.setTimeBetweenEvictionRunsMillis(30000);
+        //检测间隔(1分钟)与最小空闲时间(3分钟)保持1:3关系
         // 配置一个连接在池中最小生存的时间，单位是毫秒
         // 连接保持空闲而不被驱逐的最小时间
-        druidDataSource.setMinEvictableIdleTimeMillis(300000);
+        druidDataSource.setMinEvictableIdleTimeMillis(30000*3);
         // 连接池中的minIdle数量以内的连接，空闲时间超过minEvictableIdleTimeMillis，则会执行keepAlive操作。实际项目中建议配置成true
         druidDataSource.setKeepAlive(true);
         // 检测连接是否可用

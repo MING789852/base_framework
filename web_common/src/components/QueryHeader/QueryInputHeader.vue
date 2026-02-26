@@ -1,94 +1,46 @@
 <script setup lang="ts">
 
 import QueryTypeEnum from "@/enums/QueryTypeEnum";
+import {isNullOrUnDef} from "@pureadmin/utils";
+import QueryTypeInput from "@/components/QueryTypeInput/QueryTypeInput.vue";
 
 interface Props {
   queryColumns?: Array<ColumnDefine>,
-  dictMapping?: Object
+  dictMapping?: Object,
+  queryInHeaderWithCondition?: boolean
 }
 const query = defineModel<QueryDefine>('query', {required:false})
 withDefaults(defineProps<Props>(),{
   queryColumns: ()=>[],
-  dictMapping: ()=>{return {}}
+  dictMapping: ()=>{return {}},
+  queryInHeaderWithCondition: ()=> false
 })
-const clearOption = (prop) => {
-  delete query.value.queryParams[prop]
+const getStyle = (item:ColumnDefine) => {
+  if (item.queryType === QueryTypeEnum.INPUT) {
+    return {width: '160px', height: '24px'}
+  }else if (item.queryType === QueryTypeEnum.OPTION){
+    return {width: '160px', height: '24px'}
+  }else if (item.queryType === QueryTypeEnum.OPTION_LIKE){
+    return {width: '200px', height: '24px'}
+  }else if (item.queryType === QueryTypeEnum.MULTIPLE_OPTION){
+    return {width: '220px', height: '24px'}
+  }else {
+    return {}
+  }
 }
 </script>
 
 <template>
   <template  v-for="item in queryColumns" :key="item.prop">
-    <div class="flex flex-row content-center">
+    <div v-if="isNullOrUnDef(item.query)||item.query===true"  class="flex flex-row content-center">
       <div class="text-nowrap text-xs flex items-center" style="min-width: 40px;height: 24px">{{item.label}}：</div>
-      <template v-if="item.queryType === QueryTypeEnum.INPUT">
-        <el-input v-model="query.queryParams[item.prop]" style="width: 160px;height: 24px" size="small"/>
-      </template>
-      <template v-else-if="item.queryType === QueryTypeEnum.OPTION">
-        <el-select v-model="query.queryParams[item.prop]" style="width: 160px;height: 24px" size="small"
-                   filterable placeholder="请选择" clearable @clear="clearOption(item.prop)">
-          <el-option
-              v-for="(value,key) in dictMapping[item.prop]"
-              :key="key"
-              :label="value"
-              :value="key"
-          />
-        </el-select>
-      </template>
-      <template v-else-if="item.queryType === QueryTypeEnum.OPTION_LIKE">
-        <el-select v-model="query.queryParams[item.prop]" style="width: 200px;height: 24px" size="small" multiple
-                   collapse-tags-tooltip collapse-tags default-first-option :reserve-keyword="false"
-                   filterable allow-create placeholder="多项模糊查询" clearable @clear="clearOption(item.prop)"/>
-      </template>
-      <template v-else-if="item.queryType === QueryTypeEnum.MULTIPLE_OPTION">
-        <el-select v-model="query.queryParams[item.prop]" style="width: 220px;height: 24px" size="small" collapse-tags multiple
-                   filterable placeholder="请选择" clearable @clear="clearOption(item.prop)">
-          <el-option
-              v-for="(value,key) in dictMapping[item.prop]"
-              :key="key"
-              :label="value"
-              :value="key"
-          />
-        </el-select>
-      </template>
-      <template v-else-if="item.queryType === QueryTypeEnum.DATE_RANGE">
-        <el-date-picker
-            v-model="query.queryParams[item.prop]"
-            clearable
-            size="small"
-            type="daterange"
-            value-format="YYYY-MM-DD HH:mm:ss"
-            range-separator="至"
-            start-placeholder="开始日期"
-            end-placeholder="结束日期"
-        />
-      </template>
-      <template v-else-if="item.queryType === QueryTypeEnum.MONTH">
-        <el-date-picker
-            v-model="query.queryParams[item.prop]"
-            size="small"
-            class="date"
-            type="month"
-            value-format="YYYY-MM-DD HH:mm:ss"
-        />
-      </template>
-      <template v-else-if="item.queryType === QueryTypeEnum.YEAR">
-        <el-date-picker
-            v-model="query.queryParams[item.prop]"
-            size="small"
-            class="date"
-            type="year"
-            value-format="YYYY-MM-DD HH:mm:ss"
-        />
-      </template>
-      <template v-else-if="item.queryType === QueryTypeEnum.DATE">
-        <el-date-picker
-            v-model="query.queryParams[item.prop]"
-            size="small"
-            class="date"
-            type="date"
-            value-format="YYYY-MM-DD HH:mm:ss"
-        />
-      </template>
+      <QueryTypeInput
+          :item="item"
+          :dict-mapping="dictMapping"
+          size="small"
+          :query-in-header-with-condition="queryInHeaderWithCondition"
+          :get-style="getStyle"
+          v-model:query="query"/>
     </div>
   </template>
 </template>

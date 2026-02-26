@@ -30,7 +30,7 @@ public interface TcRouterService {
     String deleteRouter(List<TcRouter> tcRouterList);
 
 
-    List<TcRouter> getPrivateRouter(TcUser tcUser);
+    List<TcRouter> getPrivateRouter(List<TcRole> roleList);
 
     List<TcRouter> getPublicRouter();
 

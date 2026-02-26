@@ -29,4 +29,6 @@ public interface TcUserRoleRelService {
     String unRelUserAndRole(String roleId,String userId);
 
     void unRelByRoleIdList(List<String> roleIdList);
+
+    int unRelByUserIdList(List<String> userIdList);
 }

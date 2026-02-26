@@ -36,7 +36,6 @@ public class TcUser implements Serializable {
     /**
      * 姓名
      */
-    @Size(max = 50, message = "姓名最大长度要小于 50")
     @NotBlank(message = "姓名不能为空")
     private String nickName;
 
@@ -72,27 +71,24 @@ public class TcUser implements Serializable {
      * 工号
      */
     @Size(max = 50, message = "工号最大长度要小于 50")
-    @NotBlank(message = "工号不能为空")
     private String jobNumber;
 
     /**
-     * 用户类型 0、系统创建  1、微信小程序获取
+     * 用户类型 由UserTypeEnum决定
      */
-    @NotNull(message = "用户类型 0、系统创建  1、微信小程序获取不能为null")
+    @NotNull(message = "用户类型")
     private Integer userType;
 
     /**
      * 邮箱地址
      */
     @Size(max = 100, message = "邮箱地址最大长度要小于 100")
-    @NotBlank(message = "邮箱地址不能为空")
     private String email;
 
     /**
      * 手机号
      */
     @Size(max = 50, message = "手机号最大长度要小于 50")
-    @NotBlank(message = "手机号不能为空")
     private String phoneNumber;
 
     /**

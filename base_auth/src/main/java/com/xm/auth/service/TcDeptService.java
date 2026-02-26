@@ -1,5 +1,6 @@
 package com.xm.auth.service;
 
+import com.xm.auth.domain.entity.TcDept;
 import com.xm.auth.domain.entity.TcUser;
 import com.xm.auth.domain.vo.TcDeptVo;
 import com.xm.auth.domain.vo.UserAndDeptVo;
@@ -13,9 +14,9 @@ public interface TcDeptService {
      */
     String initDept();
 
-    List<TcDeptVo> selectByList(QueryData queryData);
+    List<TcDeptVo> selectByList(QueryData<TcDeptVo> queryData);
 
-    List<TcDeptVo> selectAllByList(QueryData queryData);
+    List<TcDeptVo> selectAllByList(QueryData<TcDeptVo> queryData);
 
     TcDeptVo selectOne(String id);
 
@@ -23,10 +24,12 @@ public interface TcDeptService {
 
     List<UserAndDeptVo> findUserAndDeptRefByDeptId(String deptId);
 
+    List<TcDept> selectDeptByDeptNameList(List<String> deptNameList);
+
     /**
      * 根据部门id创建用户
      */
-    List<TcUser> createTcUserWithDeptId(String deptId);
+    List<TcUser> createTcUserWithDeptId(List<String> deptIdList);
 
 
 

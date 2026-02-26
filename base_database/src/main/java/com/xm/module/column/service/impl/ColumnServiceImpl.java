@@ -4,6 +4,7 @@ import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.xm.advice.exception.exception.CommonException;
+import com.xm.annotation.IgnoreAuth;
 import com.xm.auth.domain.entity.TcUser;
 import com.xm.module.column.domain.params.ColumnConfig;
 import com.xm.core.params.ColumnProps;
@@ -17,11 +18,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 @Slf4j
 @Service
@@ -45,8 +45,14 @@ public class ColumnServiceImpl implements ColumnService {
             defaultColumns=new ArrayList<>();
         }
         if (CollectionUtil.isEmpty(dataBaseColumns)){
-            defaultColumns=new ArrayList<>();
+            dataBaseColumns=new ArrayList<>();
         }
+        List<ColumnProps> finalDefaultColumns = defaultColumns;
+        //获取默认配置prop序列
+        Map<String, Integer> defaultColumnsPropIndexMap = IntStream.
+                range(0, defaultColumns.size()).boxed()
+                .collect(Collectors.toMap(index -> finalDefaultColumns.get(index).getProp(), index -> index));
+        //获取数据库配置prop序列
         Map<String, ColumnProps> defaultColumnsPropMap = defaultColumns.stream().collect(Collectors.toMap(ColumnProps::getProp, Function.identity()));
         Map<String, ColumnProps> dataBaseColumnsPropMap = dataBaseColumns.stream().collect(Collectors.toMap(ColumnProps::getProp, Function.identity()));
         //默认配置对数据库配置取差集就是新增
@@ -55,16 +61,42 @@ public class ColumnServiceImpl implements ColumnService {
         //数据库配置对默认配置取差集就是删除
         List<String> deleteColumn = dataBaseColumnsPropMap.keySet().stream()
                 .filter(item -> !defaultColumnsPropMap.containsKey(item)).collect(Collectors.toList());
-        //以数据库为基底处理删除
-        List<ColumnProps> list = dataBaseColumns.stream().filter(item -> !deleteColumn.contains(item.getProp())).collect(Collectors.toList());
-        //以数据库为基底处理新增
-        for (String add:newAddColumn){
-            ColumnProps columnProps = defaultColumnsPropMap.get(add);
-            if (columnProps==null){
-                continue;
+        /*
+         * 以数据库为基底
+         */
+        //处理删除
+        List<ColumnProps> databaseList =
+                dataBaseColumns.stream().filter(item -> !deleteColumn.contains(item.getProp())).collect(Collectors.toList());
+        // 创建结果映射，容量为最终列表大小
+        Map<Integer, ColumnProps> resultMap = new HashMap<>(databaseList.size() + newAddColumn.size());
+        // 处理新增列：按默认顺序放入指定位置
+        newAddColumn.stream()
+                .map(defaultColumnsPropMap::get)
+                .filter(Objects::nonNull)
+                .forEach(columnProps -> {
+                    Integer index = defaultColumnsPropIndexMap.get(columnProps.getProp());
+                    if (index != null) {
+                        resultMap.put(index, columnProps);
+                    }
+                });
+        // 找出未被占用的索引位置
+        List<Integer> availableIndexes = IntStream.range(0, databaseList.size() + newAddColumn.size())
+                .filter(i -> !resultMap.containsKey(i))
+                .boxed()
+                .sorted()
+                .collect(Collectors.toList());
+        // 将数据库中的列按顺序填入空闲位置
+        Iterator<Integer> indexIterator = availableIndexes.iterator();
+        databaseList.forEach(column -> {
+            if (indexIterator.hasNext()) {
+                resultMap.put(indexIterator.next(), column);
             }
-            list.add(columnProps);
-        }
+        });
+        // 按索引排序生成最终列表
+        List<ColumnProps> list = resultMap.entrySet().stream()
+                .sorted(Map.Entry.comparingByKey())
+                .map(Map.Entry::getValue)
+                .collect(Collectors.toList());
         //以数据库为基底处理字段类型变更或者名称变更或子项变更
         for (ColumnProps dataBaseColumnProps:list){
             ColumnProps defaultColumn = defaultColumnsPropMap.get(dataBaseColumnProps.getProp());
@@ -94,6 +126,9 @@ public class ColumnServiceImpl implements ColumnService {
         if (CollectionUtil.isEmpty(defaultColumns)){
             return new ArrayList<>();
         }
+        if (!UserInfoUtil.isLogin()){
+            return defaultColumns;
+        }
         if (StrUtil.isBlank(groupName)){
             throw new CommonException("列配置groupName不能为空");
         }
@@ -114,6 +149,9 @@ public class ColumnServiceImpl implements ColumnService {
     @Override
     @Transactional(rollbackFor = Exception.class)
     public String saveColumnPropsConfig(ColumnConfig columnConfig) {
+        if (!UserInfoUtil.isLogin()){
+            throw new CommonException("未登录,无法配置");
+        }
         List<ColumnProps> defaultColumns = columnConfig.getDefaultColumns();
         String groupName = columnConfig.getGroupName();
         Boolean global = columnConfig.getGlobal();
@@ -133,6 +171,9 @@ public class ColumnServiceImpl implements ColumnService {
 
     @Override
     public String resetColumnPropsConfig(ColumnConfig columnConfig) {
+        if (!UserInfoUtil.isLogin()){
+            throw new CommonException("未登录,无法配置");
+        }
         String groupName = columnConfig.getGroupName();
         Boolean global = columnConfig.getGlobal();
         if (StrUtil.isBlank(groupName)){

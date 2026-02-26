@@ -44,9 +44,15 @@ public class CustomRedisCacheManager extends RedisCacheManager {
             long ttl = expireParams.getTtl();
             String unit = expireParams.getUnit();
             Duration duration = expireParams.getDuration();
-            cacheConfig=cacheConfig
-                    .prefixCacheNameWith(StrUtil.format("cache:{}:",ttl+unit))
-                    .entryTtl(duration);
+            boolean unLimitTime = expireParams.isUnLimitTime();
+            if (unLimitTime){
+                cacheConfig=cacheConfig
+                        .prefixCacheNameWith(StrUtil.format("cache:{}:",ttl+unit));
+            }else {
+                cacheConfig=cacheConfig
+                        .prefixCacheNameWith(StrUtil.format("cache:{}:",ttl+unit))
+                        .entryTtl(duration);
+            }
         }
         return super.createRedisCache(name, cacheConfig);
     }

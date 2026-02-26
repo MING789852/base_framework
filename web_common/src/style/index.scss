@@ -2,6 +2,7 @@
 @import "./element-plus";
 @import "./sidebar";
 @import "./dark";
+@import "animate.css";
 
 /* 自定义全局 CssVar */
 :root {
@@ -29,4 +30,9 @@
 .row_background_color{
   background-color: #dedfe0!important;
   //background-color: red !important;
+}
+
+.xm-card{
+  border: 1px solid #e4e7ed; // 设置外框宽度和颜色
+  border-radius: 4px; // 圆角效果
 }

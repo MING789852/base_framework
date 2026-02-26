@@ -2,7 +2,7 @@ package com.xm.flowable.domain.vo;
 
 import lombok.Data;
 
-import java.util.Map;
+import java.util.List;
 
 @Data
 public class EdgeElement {
@@ -11,5 +11,8 @@ public class EdgeElement {
     private NodeText text;
     private String sourceNodeId;
     private String targetNodeId;
-    private NodeProp properties;
+    private ElementProp properties;
+    private EdgePoint startPoint;
+    private EdgePoint endPoint;
+    private List<EdgePoint> pointsList;
 }

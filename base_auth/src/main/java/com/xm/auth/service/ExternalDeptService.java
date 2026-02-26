@@ -9,7 +9,7 @@ public interface ExternalDeptService {
     /**
      * 根据部门id创建用户
      */
-    List<TcUser> createTcUserWithDeptId(String deptId);
+    List<TcUser> createTcUserWithDeptId(List<String> deptIdList);
 
 
     /**

@@ -1,7 +1,6 @@
 package com.xm.util.cache;
 
 
-import com.xm.advice.exception.exception.CommonException;
 import com.xm.core.cache.CacheService;
 import com.xm.util.bean.SpringBeanUtil;
 
@@ -19,6 +18,15 @@ public class CacheUtil {
 
     public static Object get(String key){
         return cacheService.get(key);
+    }
+
+    public static <T> T get(String key, Class<T> clazz){
+        Object o = cacheService.get(key);
+        if (o==null){
+            return null;
+        }else {
+            return clazz.cast(o);
+        }
     }
 
     public static void set(String key, Object value){
@@ -47,5 +55,14 @@ public class CacheUtil {
 
     public static Object get(String key, String hasKey){
         return cacheService.get(key,hasKey);
+    }
+
+    public static <T> T get(String key, String hasKey, Class<T> clazz){
+        Object o = cacheService.get(key, hasKey);
+        if (o==null){
+            return null;
+        }else {
+            return clazz.cast(o);
+        }
     }
 }

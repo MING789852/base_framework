@@ -1,21 +1,17 @@
 package com.xm.configuration.session;
 
-import com.xm.util.redis.RedisTemplateUtil;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.session.SessionRepository;
-import org.springframework.session.config.annotation.web.http.EnableSpringHttpSession;
-import org.springframework.session.data.redis.RedisIndexedSessionRepository;
+import org.springframework.session.data.redis.config.annotation.web.http.EnableRedisHttpSession;
 
-@EnableSpringHttpSession
+
 @Configuration
+@Slf4j
+@RequiredArgsConstructor
+@EnableRedisHttpSession(maxInactiveIntervalInSeconds = 7200)
+@ConditionalOnProperty(name = "spring.session.store-type", havingValue = "REDIS")
 public class RedisHttpSessionConfig {
 
-
-    @Bean
-    @ConditionalOnProperty(name = "spring.session.store-type", havingValue = "REDIS")
-    public SessionRepository<?> redisSessionRepository() {
-        return new RedisIndexedSessionRepository(RedisTemplateUtil.getRedisTemplate());
-    }
 }

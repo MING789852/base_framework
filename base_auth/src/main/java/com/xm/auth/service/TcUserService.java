@@ -20,7 +20,7 @@ public interface TcUserService extends BaseService<TcUserMapper,TcUser> {
 
     String changeEnable(UserEnableVo userEnableVo);
 
-    String saveOrUpdateData(List<TcUser> list);
+    String addSystemUser(List<TcUser> list);
 
     String saveOrUpdateData(List<TcUser> tcUserList, Boolean updateUser);
 
@@ -43,4 +43,6 @@ public interface TcUserService extends BaseService<TcUserMapper,TcUser> {
     TcUser selectById(String id);
 
     TcUser getUserByUserName(String userName);
+
+    String resetLoginTry(List<TcUser> list);
 }

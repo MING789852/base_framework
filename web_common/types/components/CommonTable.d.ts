@@ -1,9 +1,5 @@
-declare interface IndexColumn {
-  label: string,
-  prop: string,
-  show?: boolean,
-  fixed?: boolean
-}
+type TableType = 'action'|'report'
+type SaveOrUpdateType = 'onRow'|'onDialog'
 
 declare interface CommonTableType {
   isAdd: boolean,
@@ -18,16 +14,15 @@ declare interface CommonTableType {
   getData: () => void
 }
 
-declare interface InputDisabled{
-  [key:string]:(row:any,prop:string)=>Boolean
-}
 
 declare interface CommonTableButton{
   queryFn?: boolean,
   addFn?: boolean,
+  editFn?: boolean,
   saveFn?: boolean,
   deleteFn?: boolean,
   refreshFn?: boolean,
   initQueryFn?: boolean,
-  exportExcelFn?: boolean
+  exportExcelFn?: boolean,
+  fullscreenFn?: boolean
 }

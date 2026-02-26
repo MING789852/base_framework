@@ -4,7 +4,7 @@ import { getConfig } from "@/config";
 import NProgress from "@/utils/progress";
 import { transformI18n } from "@/plugins/i18n";
 import { buildHierarchyTree } from "@/utils/tree";
-import remainingRouter from "./modules/remaining";
+import rootRemainingRouter from "./modules/remaining";
 import { useMultiTagsStoreHook } from "@/store/modules/multiTags";
 import { usePermissionStoreHook } from "@/store/modules/permission";
 import {isUrl, openLink, storageLocal, isAllEmpty, isNullOrUnDef} from "@pureadmin/utils";
@@ -28,9 +28,26 @@ import {
 import {
   type DataInfo,
   userKey,
-  removeToken,
-  multipleTabsKey
+  multipleTabsKey, removeAllAuth
 } from "@/utils/auth";
+
+
+const moduleRemainingRouterImport:Record<string, any> = import.meta.glob(
+  ["@root/router/remaining"],
+  {
+    eager: true
+  }
+);
+const moduleRemainingRouter:Array<RouteConfigsTable>=Object.values(moduleRemainingRouterImport)[0].default
+const remainingRouter = [...rootRemainingRouter, ...moduleRemainingRouter]
+
+const moduleWhiteListImport:Record<string, any> = import.meta.glob(
+  ["@root/router/whiteList"],
+  {
+    eager: true
+  }
+);
+const moduleWhiteList:Array<string>=Object.values(moduleWhiteListImport)[0].default
 
 /** 自动导入全部静态路由，无需再手动引入！匹配 src/router/modules 目录（任何嵌套级别）中具有 .ts 扩展名的所有文件，除了 remaining.ts 文件
  * 如何匹配所有文件请看：https://github.com/mrmlnc/fast-glob#basic-syntax
@@ -54,6 +71,7 @@ Object.keys(modules).forEach(key => {
 export const constantRoutes: Array<RouteRecordRaw> = formatTwoStageRoutes(
   formatFlatteningRoutes(buildHierarchyTree(ascending(routes.flat(Infinity))))
 );
+
 
 /** 用于渲染菜单，保持原始层级 */
 export const constantMenus: Array<RouteComponent> = ascending(
@@ -102,7 +120,7 @@ export function resetRouter() {
 }
 
 /** 路由白名单 */
-const whiteList = ["/login",'/auth/authLogin'];
+const whiteList = [...["/login",'/auth/authLogin','/auth/authLoginTest'], ...moduleWhiteList];
 
 const { VITE_HIDE_HOME } = import.meta.env;
 
@@ -128,7 +146,11 @@ router.beforeEach((to: ToRouteType, _from, next) => {
   }
   /** 如果已经登录并存在登录信息后不能跳转到路由白名单，而是继续保持在当前页面 */
   function toCorrectRoute() {
-    whiteList.includes(to.fullPath) ? next(_from.fullPath) : next();
+    if (moduleWhiteList.includes(to.fullPath)){
+      next()
+    }else {
+      whiteList.includes(to.fullPath) ? next(_from.fullPath) : next();
+    }
   }
   if (Cookies.get(multipleTabsKey) && userInfo) {
     // 无权限跳转403页面
@@ -153,10 +175,8 @@ router.beforeEach((to: ToRouteType, _from, next) => {
         // 授权登录直接跳转
         let toName = to.name
         if (toName === 'authLogin'){
-          console.log('直接跳转授权路由')
           next()
         } else {
-          console.log('刷新路由')
           initRouter().then((router: Router) => {
             if (!useMultiTagsStoreHook().getMultiTagsCache) {
               const { path } = to;
@@ -200,7 +220,7 @@ router.beforeEach((to: ToRouteType, _from, next) => {
         if (whiteList.indexOf(to.path) !== -1) {
           next();
         } else {
-          removeToken();
+          removeAllAuth()
           next({ path: "/login" });
         }
       } else {

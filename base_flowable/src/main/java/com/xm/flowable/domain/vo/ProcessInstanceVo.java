@@ -10,6 +10,7 @@ public class ProcessInstanceVo {
     private String id;
     private Map<String, Object> processVariables;
     private String businessKey;
+    private String businessType;
     private String processDefinitionId;
     private Date startTime;
     private boolean isSuspended;

@@ -22,6 +22,8 @@ public class DateFieldTypeHandler implements ExternalFieldTypeHandler {
 
     private final TcFormDynamicFieldService dynamicFieldService;
 
+    private final String formateDate="yyyy-MM-dd HH:mm:ss";
+
     @Override
     public String getFieldType() {
         return FormFieldTypeEnum.DATE.getValue();
@@ -52,7 +54,7 @@ public class DateFieldTypeHandler implements ExternalFieldTypeHandler {
         }
         if (object instanceof String){
             String dateStr=object.toString();
-            Date date= DateUtil.parse(dateStr,"yyyy-MM-dd");
+            Date date= DateUtil.parse(dateStr,formateDate);
             TcFormDynamicField dynamicField=new TcFormDynamicField();
             dynamicField.setFieldDate(date);
             dynamicField.setRefType(refType);
@@ -81,7 +83,7 @@ public class DateFieldTypeHandler implements ExternalFieldTypeHandler {
         }
         Date fieldDate = dynamicField.getFieldDate();
         if (fieldDate!=null){
-            data.put(detailModel.getFieldCode(),DateUtil.format(fieldDate,"yyyy-MM-dd"));
+            data.put(detailModel.getFieldCode(),DateUtil.format(fieldDate,formateDate));
         }
     }
 

@@ -21,13 +21,17 @@ import java.util.Date;
 public class SystemAuthInterceptor implements HandlerInterceptor {
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) {
-        // 如果不是映射到方法直接拒绝
+        // 检查是否是 HandlerMethod（即控制器方法）
         if(!(handler instanceof HandlerMethod)){
             return false;
         }
         // 判断是否直接放行
         HandlerMethod handlerMethod=(HandlerMethod)handler;
         Method method=handlerMethod.getMethod();
+        Class<?> controllerClass = handlerMethod.getBeanType();
+        if (controllerClass.isAnnotationPresent(IgnoreAuth.class)) {
+            return true;
+        }
         if (method.isAnnotationPresent(IgnoreAuth.class)) {
             return true;
         }

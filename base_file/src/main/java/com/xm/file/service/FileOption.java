@@ -16,8 +16,6 @@ public interface FileOption {
 
     TcFile uploadByUploadFileWithStream(UploadFileWithStream uploadFileWithStream);
 
-    TcFile copyFileRef(TcFile file);
-
     List<TcFileWithInputStream> readFileInputStreamByIdList(List<String> idList);
 
     List<TcFileWithByteArray> readFileByteArrayByIdList(List<String> idList);
@@ -32,6 +30,7 @@ public interface FileOption {
 
     void viewFile(String id, HttpServletResponse response);
 
+    void viewFileWithCacheControl(String id, HttpServletResponse response);
 
     void downloadFile(String id, HttpServletResponse response);
 
@@ -46,8 +45,6 @@ public interface FileOption {
     CreateChunkUploadResult createChunkUpload(CreateChunkUploadParams params);
 
     UploadChunkResult uploadChunk(UploadChunkParams params,byte[] bytes);
-
-    TcFile getFileByMd5(String md5,TcFile temp);
 
     TcFile mergeChunk(MergeChunkParams params);
 }

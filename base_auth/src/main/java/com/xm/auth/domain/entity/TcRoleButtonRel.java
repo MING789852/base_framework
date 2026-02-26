@@ -1,5 +1,6 @@
 package com.xm.auth.domain.entity;
 
+import java.io.Serializable;
 import java.util.Date;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
@@ -8,7 +9,7 @@ import javax.validation.constraints.Size;
 /**
  * 角色和按钮关联表
  */
-public class TcRoleButtonRel {
+public class TcRoleButtonRel implements Serializable {
     /**
     * 主键
     */

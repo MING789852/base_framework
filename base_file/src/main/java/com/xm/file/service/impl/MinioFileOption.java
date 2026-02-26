@@ -82,7 +82,7 @@ public class MinioFileOption implements FileOption {
             byte[] readBytes = IoUtil.readBytes(inputStream);
             String md5 = DigestUtil.md5Hex(readBytes);
             TcFile saveFileEntity = CommonFileUtil.getSaveFileEntity(uploadFileWithStream.getFileName(), uploadFileWithStream.getFileSize());
-            TcFile md5File=getFileByMd5(md5,saveFileEntity);
+            TcFile md5File=CommonFileUtil.getFileByMd5(md5,saveFileEntity);
             TcFile tcFile;
             if (md5File==null){
                 tcFile = saveFileEntity;
@@ -99,24 +99,6 @@ public class MinioFileOption implements FileOption {
             log.error(msg);
             throw new CommonException(msg);
         }
-    }
-
-    @Override
-    public TcFile copyFileRef(TcFile file) {
-        if (file==null){
-            return null;
-        }
-        String md5 = file.getMd5();
-        if (StrUtil.isBlank(md5)){
-            throw new CommonException("md5码为空，无法复制引用");
-        }
-        TcFile copy=new TcFile();
-        BeanUtils.copyProperties(file,copy);
-        copy.setStatus(FileStatusEnum.AVAILABLE.getValue());
-        copy.setId(SnowIdUtil.getSnowId());
-        copy.setCreateDate(new Date());
-        copy.setCreateUser("MD5 COPY");
-        return copy;
     }
 
     @Override
@@ -250,8 +232,6 @@ public class MinioFileOption implements FileOption {
         }
         try {
             byte[] readBytes = fileWithByteArray.getReadBytes();
-            // 清空response
-            response.reset();
             // 设置response的Header
             response.setCharacterEncoding("UTF-8");
             String extName = fileWithByteArray.getExtName();
@@ -283,6 +263,15 @@ public class MinioFileOption implements FileOption {
             log.error("文件查看失败", e);
             throw new CommonException("文件查看失败");
         }
+    }
+
+    @Override
+    public void viewFileWithCacheControl(String id, HttpServletResponse response) {
+        // 设置缓存控制头
+        response.setHeader("Cache-Control", "max-age=2592000");
+        response.setHeader("Pragma", "cache"); // 兼容HTTP/1.0
+        response.setHeader("ETag",id);
+        viewFile(id, response);
     }
 
     @Override
@@ -366,7 +355,7 @@ public class MinioFileOption implements FileOption {
             throw new CommonException("文件MD5不存在，无法判断是否继续分块上传");
         }
         TcFile saveFileEntity = CommonFileUtil.getSaveFileEntity(params.getFileName(), params.getFileSize());
-        TcFile md5File= getFileByMd5(md5,saveFileEntity);
+        TcFile md5File= CommonFileUtil.getFileByMd5(md5,saveFileEntity);
         CreateChunkUploadResult result = new CreateChunkUploadResult();
         if (md5File==null) {
             LambdaQueryWrapper<TcFileChunk> chunkLambdaQueryWrapper = new LambdaQueryWrapper<>();
@@ -435,31 +424,6 @@ public class MinioFileOption implements FileOption {
             String msg = StrUtil.format("文件->{},第{}块上传失败", fileName, chunkNumber);
             log.error(msg, e);
             throw new CommonException(msg);
-        }
-    }
-
-    @Override
-    @Transactional(rollbackFor = Exception.class)
-    public TcFile getFileByMd5(String md5,TcFile temp) {
-        if (StrUtil.isBlank(md5)){
-            throw new CommonException("文件MD5码不能为空");
-        }
-        LambdaQueryWrapper<TcFile> lambdaQueryWrapper = new LambdaQueryWrapper<>();
-        lambdaQueryWrapper
-                .eq(TcFile::getMd5, md5);
-        List<TcFile> fileList = tcFileMapper.selectList(lambdaQueryWrapper);
-        if (CollectionUtil.isEmpty(fileList)){
-            return null;
-        }else {
-            TcFile copyMd5 = copyFileRef(fileList.get(0));
-            //如果传入参数非空，修改文件名
-            if (temp!=null){
-                copyMd5.setFileName(temp.getFileName());
-                copyMd5.setOriginalFileName(temp.getOriginalFileName());
-                copyMd5.setExtName(temp.getExtName());
-            }
-            tcFileMapper.insert(copyMd5);
-            return copyMd5;
         }
     }
 

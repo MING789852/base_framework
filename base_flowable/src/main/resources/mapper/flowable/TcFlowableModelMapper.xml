@@ -13,4 +13,60 @@
     <!--@mbg.generated-->
     process_definition_key, process_definition_name, create_user, create_date
   </sql>
+
+    <select id="selectHisActInst" resultType="com.xm.flowable.domain.query.ActInst">
+        select ID_ as id, TASK_ID_ as taskId, EXECUTION_ID_ as executionId, ACT_ID_ as actId
+        from act_hi_actinst
+                 ${ew.customSqlSegment};
+    </select>
+
+    <select id="selectRuActInst" resultType="com.xm.flowable.domain.query.ActInst">
+        select ID_ as id, TASK_ID_ as taskId, EXECUTION_ID_ as executionId, ACT_ID_ as actId
+        from act_ru_actinst
+                 ${ew.customSqlSegment};
+    </select>
+
+    <delete id="deleteHisTask">
+        delete from act_hi_taskinst
+                        ${ew.customSqlSegment}
+    </delete>
+
+    <delete id="deleteHisVar">
+        delete from act_hi_varinst
+                        ${ew.customSqlSegment}
+    </delete>
+
+    <delete id="deleteHisIdentity">
+        delete from act_hi_identitylink
+                        ${ew.customSqlSegment}
+    </delete>
+
+    <delete id="deleteHisActInst">
+        delete from act_hi_actinst
+                        ${ew.customSqlSegment}
+    </delete>
+
+    <delete id="deleteRuExecution">
+        delete from act_ru_execution
+                        ${ew.customSqlSegment}
+    </delete>
+
+    <delete id="deleteRuTask">
+        delete from act_ru_task
+                        ${ew.customSqlSegment}
+    </delete>
+
+    <delete id="deleteRuActInst">
+        delete from act_ru_actinst
+                        ${ew.customSqlSegment}
+    </delete>
+
+    <delete id="deleteRuVar">
+        delete from act_ru_variable
+                        ${ew.customSqlSegment}
+    </delete>
+
+    <update id="updateGeByteArray">
+        UPDATE ACT_GE_BYTEARRAY SET BYTES_ = #{bpmnBytes} WHERE DEPLOYMENT_ID_ = #{deploymentId,jdbcType=VARCHAR} AND NAME_ LIKE '%.bpmn%'
+    </update>
 </mapper>

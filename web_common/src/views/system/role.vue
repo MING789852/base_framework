@@ -1,42 +1,40 @@
 <template>
-  <div class="parent">
-    <common-table ref="commonTableRef"  :columns="columns"
-                  :queryColumns="queryColumns" :queryInHeader="false" :dictList="dictMapping"
-                  :api="systemRoleApi" :tableFn="tableFn" :table-button="tableButton">
-      <template #column>
-        <el-table-column header-align="center" align="center" label="操作" >
-          <template #default="scope">
-            <a style="cursor: pointer;color: #409EFF" @click="assignedUser(scope.row)">用户</a>
-            <a style="cursor: pointer;color: #409EFF;margin-left: 5px" @click="assignRouters(scope.row)">分配菜单</a>
-            <a style="cursor: pointer;color: #409EFF;margin-left: 5px" @click="assignRouterAction(scope.row)">分配操作</a>
+  <common-table ref="commonTableRef"  :columns="columns"
+                :queryColumns="queryColumns" :queryInHeader="false" :dictList="dictMapping"
+                :api="systemRoleApi" :tableFn="tableFn" :table-button="tableButton">
+    <template #column>
+      <el-table-column header-align="center" align="center" label="操作" >
+        <template #default="scope">
+          <a style="cursor: pointer;color: #409EFF" @click="assignedUser(scope.row)">用户</a>
+          <a style="cursor: pointer;color: #409EFF;margin-left: 5px" @click="assignRouters(scope.row)">分配菜单</a>
+          <a style="cursor: pointer;color: #409EFF;margin-left: 5px" @click="assignRouterAction(scope.row)">分配操作</a>
+        </template>
+      </el-table-column>
+    </template>
+    <template #dialog>
+      <el-dialog v-model="assignRouterActionFlag" destroy-on-close fullscreen append-to-body title="分配操作">
+        <router-action-ref :role="assignRouterActionData" @finish="finishAssignRouterActionData"/>
+      </el-dialog>
+      <el-dialog v-model="assignedUserDialogFlag" destroy-on-close fullscreen append-to-body>
+        <common-table v-if="assignedUserDialogFlag" ref="assignedUserCommonTableRef" :table-type="'action'" :api="systemRoleApi" :columns="assignedUserColumns"
+                      :table-button="assignedUserTableButton" :table-fn="assignedUserTableFn" :query-columns="assignedUserColumns"
+                      :show-selection="false" :query-in-header="false">
+          <template #button_end>
+            <el-button  class="font-bold" size="small" type="primary" @click="roleAddUser">添加用户</el-button>
+            <el-button  class="font-bold" size="small" type="primary" @click="unRelUserAndRoleAll">解除全部</el-button>
+            <el-button  class="font-bold" size="small" type="primary" @click="exportRoleUsersExcel">导出Excel</el-button>
           </template>
-        </el-table-column>
-      </template>
-      <template #dialog>
-        <el-dialog v-model="assignRouterActionFlag" destroy-on-close fullscreen append-to-body title="分配操作">
-          <router-action-ref :role="assignRouterActionData" @finish="finishAssignRouterActionData"/>
-        </el-dialog>
-        <el-dialog v-model="assignedUserDialogFlag" destroy-on-close fullscreen append-to-body>
-          <common-table v-if="assignedUserDialogFlag" ref="assignedUserCommonTableRef" :table-type="'action'" :api="systemRoleApi" :columns="assignedUserColumns"
-                        :table-button="assignedUserTableButton" :table-fn="assignedUserTableFn" :query-columns="assignedUserQueryColumns"
-                        :show-selection="false"
-                        height="75vh">
-            <template #button_end>
-              <el-button  class="font-bold" size="small" type="primary" @click="roleAddUser">添加用户</el-button>
-              <el-button  class="font-bold" size="small" type="primary" @click="unRelUserAndRoleAll">解除全部</el-button>
-            </template>
-            <template #column>
-              <el-table-column header-align="center" align="center" label="操作" >
-                <template #default="scope">
-                  <a style="cursor: pointer;color: #409EFF" @click="unRelUserAndRole(scope.row)">解除</a>
-                </template>
-              </el-table-column>
-            </template>
-          </common-table>
-        </el-dialog>
-      </template>
-    </common-table>
-  </div>
+          <template #column>
+            <el-table-column header-align="center" align="center" label="操作" >
+              <template #default="scope">
+                <a style="cursor: pointer;color: #409EFF" @click="unRelUserAndRole(scope.row)">解除</a>
+              </template>
+            </el-table-column>
+          </template>
+        </common-table>
+      </el-dialog>
+    </template>
+  </common-table>
 </template>
 
 <script setup lang="tsx">
@@ -103,19 +101,12 @@ const assignedUserTableButton = ref<CommonTableButton>({
   initQueryFn: true,
   exportExcelFn: false
 })
-const assignedUserQueryColumns = ref<Array<ColumnDefine>>([
-  {label: "用户", prop: "userName_$_like",queryType:QueryTypeEnum.INPUT},
-  // {label: "所属部门", prop: "deptName_$_like",queryType:QueryTypeEnum.INPUT},
-]);
 const assignedUserColumns = ref<Array<ColumnDefine>>([
-  {fixed: true, label: "用户", prop: "userName", query: false, type: ColumnTypeEnum.COMMON},
+  // {fixed: true, label: "用户", prop: "userName", query: false, type: ColumnTypeEnum.COMMON},
   // {fixed: true, label: "所属部门", prop: "deptName", query: false, type: ColumnTypeEnum.COMMON}
 ])
-assignedUserTableFn.queryFn = () => {
-  assignedUserCommonTableRef.value.getData()
-}
 assignedUserTableFn.getData = () => {
-  common.handleRequestApi(systemRoleApi.selectUserAndDeptPageByRoleId(assignedRoleId.value,assignedUserCommonTableRef.value.query))
+  common.handleRequestApi(systemRoleApi.selectUserPageByRoleId(assignedRoleId.value,assignedUserCommonTableRef.value.query))
     .then((res:HttpResult)=>{
       let data = res.data
       assignedUserCommonTableRef.value.query.current = data.current
@@ -124,9 +115,20 @@ assignedUserTableFn.getData = () => {
       assignedUserCommonTableRef.value.tableData = data.records
     })
 }
+const exportRoleUsersExcel = () => {
+  common.showGlobalLoading()
+  systemRoleApi.exportRoleUsersExcel(assignedRoleId.value,assignedUserCommonTableRef.value.query).then((res:Blob) => {
+    common.handleBlob(res)
+  }).finally(() => {
+    common.closeGlobalLoading()
+  })
+}
 const assignedUser = (row) => {
-  assignedRoleId.value = row.id
-  assignedUserDialogFlag.value = true
+  common.handleRequestApi(systemRoleApi.getRoleUsersColumnProps()).then(res=>{
+    assignedUserColumns.value = res.data
+    assignedRoleId.value = row.id
+    assignedUserDialogFlag.value = true
+  })
 }
 const roleAddUser = async () => {
   let userIdAndNickNameRes = await common.handleRequestApi(systemUserApi.getUserIdAndNickNameMapping())
@@ -136,27 +138,32 @@ const roleAddUser = async () => {
   let dictMapping = ref({
     userIdList: userIdAndNickNameRes.data
   })
-  common.openInputDialog(columns, dictMapping, null, (result) => {
-    common.handleRequestApi(systemRoleApi.roleAddUser(assignedRoleId.value,result.data.userIdList)).then(res => {
-      assignedUserCommonTableRef.value.getData()
-      message('操作成功',{type:'success'})
-      result.done()
-    })
-  })
+  let params:OpenInputDialogDefine = {
+    columns: columns,
+    dictMapping: dictMapping,
+    callBack: (result) => {
+      common.handleRequestApi(systemRoleApi.roleAddUser(assignedRoleId.value,result.data.userIdList)).then(() => {
+        assignedUserCommonTableRef.value.getData()
+        message('操作成功',{type:'success'})
+        result.done()
+      })
+    }
+  }
+  common.openInputDialog(params)
 }
 const unRelUserAndRole = (row) => {
-  common.showMsgDialog('是否确认解除').then(res=>{
+  common.showMsgDialog('是否确认解除').then(()=>{
     common.handleRequestApi(systemRoleApi.unRelUserAndRole(assignedRoleId.value,row.userId))
-      .then((res:HttpResult)=>{
+      .then(()=>{
         assignedUserCommonTableRef.value.getData()
         message('操作成功',{type:'success'})
       })
   })
 }
 const unRelUserAndRoleAll = () => {
-  common.showMsgDialog('是否确认解除').then(res=>{
+  common.showMsgDialog('是否确认解除').then(()=>{
     common.handleRequestApi(systemRoleApi.unRelUserAndRoleAll(assignedRoleId.value,assignedUserCommonTableRef.value.query))
-      .then((res:HttpResult)=>{
+      .then(()=>{
         assignedUserCommonTableRef.value.getData()
         message('操作成功',{type:'success'})
       })
@@ -210,10 +217,4 @@ const finishAssignRouterActionData = () => {
 </script>
 
 <style scoped lang="scss">
-.parent {
-  height: 100%;
-}
-.parent> :first-child{
-  height: 100%;
-}
 </style>

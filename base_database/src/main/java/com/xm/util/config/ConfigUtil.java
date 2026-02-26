@@ -9,6 +9,7 @@ import com.xm.util.bean.SpringBeanUtil;
 import com.xm.util.id.SnowIdUtil;
 
 import java.util.Date;
+import java.util.List;
 
 public class ConfigUtil {
     private static final TcConfigMapper configMapper;
@@ -18,10 +19,22 @@ public class ConfigUtil {
     }
 
 
+    public static List<TcConfig> getGroupConfigList(String group){
+        LambdaQueryWrapper<TcConfig> queryWrapper=new LambdaQueryWrapper<>();
+        queryWrapper.eq(TcConfig::getGroupCode,group);
+        return configMapper.selectList(queryWrapper);
+    }
+
     public static TcConfig getConfig(String group, String code){
         LambdaQueryWrapper<TcConfig> queryWrapper=new LambdaQueryWrapper<>();
         queryWrapper.eq(TcConfig::getGroupCode,group).eq(TcConfig::getConfigCode,code);
         return configMapper.selectOne(queryWrapper);
+    }
+
+    public static void saveConfigList(List<TcConfig> configList){
+        for (TcConfig config : configList) {
+            saveConfig(config);
+        }
     }
 
     public static void saveConfig(TcConfig tcConfig){

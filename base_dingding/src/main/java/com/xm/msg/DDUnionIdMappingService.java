@@ -4,8 +4,8 @@ import cn.hutool.core.util.StrUtil;
 import com.xm.advice.exception.exception.CommonException;
 import com.xm.core.cache.config.CustomCacheConfig;
 import com.xm.core.msg.MsgUserIdMappingService;
-import com.xm.util.dingding.DingdingUtil;
-import com.xm.util.dingding.requestRes.DDUserDetail;
+import com.xm.util.dingding.user.DingDingUserUtil;
+import com.xm.util.dingding.user.requestRes.DDUserDetail;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.Cacheable;
@@ -26,9 +26,9 @@ public class DDUnionIdMappingService {
         String mappingType = "ddUnionId";
         String mapping = userIdMappingService.getMapping(mappingType,userId);
         if (StrUtil.isBlank(mapping)){
-            DDUserDetail userDetail = DingdingUtil.getUserDetail(DingdingUtil.getAccessToken(), userId);
+            DDUserDetail userDetail = DingDingUserUtil.getUserDetail(userId);
             if (userDetail==null){
-                throw new CommonException("请求钉钉UserId获取UnionId接口失败");
+                return null;
             }
             userIdMappingService.saveMapping(mappingType,userId,userDetail.getUnionid());
             mapping=userDetail.getUnionid();

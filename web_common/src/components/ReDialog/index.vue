@@ -13,41 +13,43 @@ import ExitFullscreen from "@iconify-icons/ri/fullscreen-exit-fill";
 
 const fullscreen = ref(false);
 
+const commonFooterButtons:Array<ButtonProps> = [
+  {
+    label: "取消",
+    text: true,
+    bg: true,
+    btnClick: ({ dialog: { options, index } }) => {
+      const done = () =>
+          closeDialog(options, index, { command: "cancel" });
+      if (options?.beforeCancel && isFunction(options?.beforeCancel)) {
+        options.beforeCancel(done, { options, index });
+      } else {
+        done();
+      }
+    }
+  },
+  {
+    label: "确定",
+    type: "primary",
+    text: true,
+    bg: true,
+    btnClick: ({ dialog: { options, index } }) => {
+      const done = () =>
+          closeDialog(options, index, { command: "sure" });
+      if (options?.beforeSure && isFunction(options?.beforeSure)) {
+        options.beforeSure(done, { options, index });
+      } else {
+        done();
+      }
+    }
+  }
+]
+
 const footerButtons = computed(() => {
   return (options: DialogOptions) => {
     return options?.footerButtons?.length > 0
-      ? options.footerButtons
-      : ([
-          {
-            label: "取消",
-            text: true,
-            bg: true,
-            btnClick: ({ dialog: { options, index } }) => {
-              const done = () =>
-                closeDialog(options, index, { command: "cancel" });
-              if (options?.beforeCancel && isFunction(options?.beforeCancel)) {
-                options.beforeCancel(done, { options, index });
-              } else {
-                done();
-              }
-            }
-          },
-          {
-            label: "确定",
-            type: "primary",
-            text: true,
-            bg: true,
-            btnClick: ({ dialog: { options, index } }) => {
-              const done = () =>
-                closeDialog(options, index, { command: "sure" });
-              if (options?.beforeSure && isFunction(options?.beforeSure)) {
-                options.beforeSure(done, { options, index });
-              } else {
-                done();
-              }
-            }
-          }
-        ] as Array<ButtonProps>);
+      ? [...commonFooterButtons,...options.footerButtons]
+      : commonFooterButtons;
   };
 });
 

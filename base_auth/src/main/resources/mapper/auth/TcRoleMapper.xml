@@ -21,7 +21,9 @@
   <select id="selectUserByRoleId" resultType="com.xm.auth.domain.vo.RoleRelUserVo">
     select *
     from (select tu.id        as userId,
-                 tu.nick_name as userName
+                 tu.nick_name as nickName,
+                 tu.username  as userName,
+                 tu.job_number as jobNumber
           from tc_user tu
           where tu.id in (select ur.user_id
                           from tc_user_role_rel ur

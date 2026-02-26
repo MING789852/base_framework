@@ -1,3 +1,9 @@
+#创建xxl-job用户
+create database xxl_job;
+create user xxl_job identified by 'BbsDcDBNDD#g';
+grant all privileges on xxl_job.* to xxl_job;
+flush privileges;
+
 #初始化系统用户密码：admin123456
 INSERT INTO tc_user (id, username, password, nick_name, judge_enable, create_user, create_date, update_user, update_date, job_number, user_type, email, manager_userid) VALUES ('1774599009114132480', 'admin', 'd7242066c728817caca6f15f65174c2a', '超级管理员', 1, 'system', '2024-04-01', null, '2024-05-06', '', 0, '', null);
 
@@ -8,9 +14,10 @@ INSERT INTO tc_router (id, path, name, title, redirect, icon, component, show_li
 INSERT INTO tc_router (id, path, name, title, redirect, icon, component, show_link, rank_int, keep_Alive, level, has_button, parent_id, judge_enable, create_user, create_date, update_user, update_date, hidden_Tag, judge_public, fullscreen) VALUES ('1780033757915516928', '/system/user', 'system-user', '用户管理', null, null, '/views/system/user.vue', 1, null, 1, 1, null, '1780033250710917120', 1, null, '2024-04-16', null, null, 0, 0, 0);
 INSERT INTO tc_router (id, path, name, title, redirect, icon, component, show_link, rank_int, keep_Alive, level, has_button, parent_id, judge_enable, create_user, create_date, update_user, update_date, hidden_Tag, judge_public, fullscreen) VALUES ('1780034165706723328', '/system/role', 'system-role', '角色管理', null, null, '/views/system/role.vue', 1, null, 1, 1, null, '1780033250710917120', 1, null, '2024-04-16', null, null, 0, 0, 0);
 INSERT INTO tc_router (id, path, name, title, redirect, icon, component, show_link, rank_int, keep_Alive, level, has_button, parent_id, judge_enable, create_user, create_date, update_user, update_date, hidden_Tag, judge_public, fullscreen) VALUES ('1785122809052270592', '/system/dictGroup', 'system-dictGroup', '字典管理', null, null, '/views/system/dict/dictGroup.vue', 1, null, 1, 1, null, '1780033250710917120', 1, null, '2024-04-30', null, null, 0, 0, 0);
-INSERT INTO tc_router (id, path, name, title, redirect, icon, component, show_link, rank_int, keep_Alive, level, has_button, parent_id, judge_enable, create_user, create_date, update_user, update_date, hidden_Tag, judge_public, fullscreen) VALUES ('1834755565499322368', '/flowable/model', 'flowable-model', '流程模型', null, null, '/views/system/flowable/flowableModel.vue', 1, null, 1, 1, null, '1780033250710917120', 1, null, '2024-09-14', null, null, 0, 0, 0);
-INSERT INTO tc_router (id, path, name, title, redirect, icon, component, show_link, rank_int, keep_Alive, level, has_button, parent_id, judge_enable, create_user, create_date, update_user, update_date, hidden_Tag, judge_public, fullscreen) VALUES ('1849746845014822912', '/form/mainModel', 'form-mainModel', '表单模型', null, null, '/views/system/form/formMainModel.vue', 1, null, 1, 1, null, '1780033250710917120', 1, null, '2024-10-25', null, null, 0, 0, 0);
-INSERT INTO tc_router (id, path, name, title, redirect, icon, component, show_link, rank_int, keep_Alive, level, has_button, parent_id, judge_enable, create_user, create_date, update_user, update_date, hidden_Tag, judge_public, fullscreen) VALUES ('1894678861183062016', '/msg/mainModel', 'msg-mainModel', '消息管理', null, null, '/views/system/msg/msgMainModel.vue', 1, null, 1, 1, null, '1780033250710917120', 1, null, '2025-02-26', null, null, 0, 0, 0);
+INSERT INTO tc_router (id, path, name, title, redirect, icon, component, show_link, rank_int, keep_Alive, level, has_button, parent_id, judge_enable, create_user, create_date, update_user, update_date, hidden_Tag, judge_public, fullscreen) VALUES ('1837416264184762368', '/flowable/model', 'flowable-model', '流程管理', null, null, '/views/system/flowable/flowableModel.vue', 1, null, 1, 1, null, '1780033250710917120', 1, null, '2024-09-21', null, null, 0, 0, 0);
+INSERT INTO tc_router (id, path, name, title, redirect, icon, component, show_link, rank_int, keep_Alive, level, has_button, parent_id, judge_enable, create_user, create_date, update_user, update_date, hidden_Tag, judge_public, fullscreen) VALUES ('1902208271465451520', '/msg/mainModel', 'msg-mainModel', '消息管理', null, null, '/views/system/msg/msgMainModel.vue', 1, null, 1, 1, null, '1780033250710917120', 1, null, '2025-03-19', null, null, 0, 0, 0);
+INSERT INTO tc_router (id, path, name, title, redirect, icon, component, show_link, rank_int, keep_Alive, level, has_button, parent_id, judge_enable, create_user, create_date, update_user, update_date, hidden_Tag, judge_public, fullscreen) VALUES ('2005568542216425472', '/flowable/show', 'flowable-show', '待办流程', null, null, '/views/system/flowable/flowableShow.vue', 1, null, 1, 1, null, '1780033250710917120', 1, null, '2025-12-29', null, null, 0, 0, 0);
+
 
 
 

@@ -9,8 +9,8 @@ class Api implements ApiBase{
     return http.post("/user/saveOrUpdateData",{data:data})
   }
 
-  deleteData(p0) {
-    console.log(p0)
+  deleteData(data) {
+    return http.post("/user/deleteData",{data:data})
   }
 
   updateUserInfo = (data)=>{
@@ -46,20 +46,8 @@ class Api implements ApiBase{
     return http.get("/user/getUserTypeMapping")
   }
 
-  createTcUserByDingDingUserId = (data) => {
-    return http.get("/ddUser/createTcUserByDingDingUserId?userId="+data)
-  }
-
-  createTcUserByDingDingWorkNum = (data) => {
-    return http.get("/ddUser/createTcUserByDingDingWorkNum?workNum="+data)
-  }
-
-  createTcUserByDingDingName = (data) => {
-    return http.get("/ddUser/createTcUserByDingDingName?name="+data)
-  }
-
-  createTcUserWithLeaderByDingDingUserId = (data) => {
-    return http.get("/ddUser/createTcUserWithLeaderByDingDingUserId?userId="+data)
+  resetLoginTry = (data) => {
+      return http.post("/user/resetLoginTry",{data:data})
   }
 }
 

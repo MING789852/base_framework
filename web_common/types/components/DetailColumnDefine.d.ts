@@ -11,8 +11,6 @@ declare global{
     // 是否禁止输入
     disabled?: boolean,
     // 表格类型
-    type: QueryTypeEnum,
-    //OPTION支持
-    changeAction?:(value: any) => void
+    type: QueryTypeEnum
   }
 }

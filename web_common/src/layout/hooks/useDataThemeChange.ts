@@ -6,7 +6,7 @@ import { routerArrays } from "@/layout/types";
 import { router, resetRouter } from "@/router";
 import type { themeColorsType } from "../types";
 import { useAppStoreHook } from "@/store/modules/app";
-import { useGlobal, storageLocal } from "@pureadmin/utils";
+import {useGlobal, storageLocal, isNullOrUnDef} from "@pureadmin/utils";
 import { useEpThemeStoreHook } from "@/store/modules/epTheme";
 import { useMultiTagsStoreHook } from "@/store/modules/multiTags";
 import {
@@ -16,7 +16,8 @@ import {
 } from "@pureadmin/theme/dist/browser-utils";
 
 export function useDataThemeChange() {
-  const { layoutTheme, layout } = useLayout();
+  const { layoutTheme, layout,initStorage } = useLayout();
+  initStorage();
   const themeColors = ref<Array<themeColorsType>>([
     /* 亮白色 */
     { color: "#ffffff", themeColor: "light" },
@@ -53,7 +54,9 @@ export function useDataThemeChange() {
     theme = getConfig().Theme ?? "light",
     isClick = true
   ) {
-    layoutTheme.value.theme = theme;
+    if (!isNullOrUnDef(layoutTheme.value)){
+      layoutTheme.value.theme = theme;
+    }
     toggleTheme({
       scopeName: `layout-theme-${theme}`
     });
@@ -78,10 +81,12 @@ export function useDataThemeChange() {
   }
 
   function setPropertyPrimary(mode: string, i: number, color: string) {
-    document.documentElement.style.setProperty(
-      `--el-color-primary-${mode}-${i}`,
-      dataTheme.value ? darken(color, i / 10) : lighten(color, i / 10)
-    );
+      if (color){
+          document.documentElement.style.setProperty(
+              `--el-color-primary-${mode}-${i}`,
+              dataTheme.value ? darken(color, i / 10) : lighten(color, i / 10)
+          );
+      }
   }
 
   /** 设置 `element-plus` 主题色 */

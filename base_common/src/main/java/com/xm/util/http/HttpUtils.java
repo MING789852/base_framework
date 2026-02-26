@@ -7,6 +7,7 @@ import com.xm.util.http.operation.OkHttpOperation;
 import com.xm.util.http.params.HttpOperationResponse;
 import lombok.extern.slf4j.Slf4j;
 
+import java.lang.reflect.Type;
 import java.util.Map;
 
 @Slf4j
@@ -37,6 +38,22 @@ public  class HttpUtils {
 
     public static <T> T doJsonRequestReturnObject(String url,HttpMethodEnum methodEnum, Map<String,String> headers, String dataMap,Class<T> tClass){
         return httpOperation.doJsonRequestReturnObject(url, methodEnum, headers, dataMap,tClass);
+    }
+
+    public static <T> T doJsonRequestReturnObject(String url, HttpMethodEnum methodEnum, Map<String,String> headers, String dataMap, Type type){
+        return httpOperation.doJsonRequestReturnObject(url, methodEnum, headers, dataMap,type);
+    }
+
+    public static  HttpOperationResponse doXWWWFormUrlencodedReturnResponse(String url, HttpMethodEnum methodEnum, Map<String,String> headers, String dataMap){
+        return httpOperation.doXWWWFormUrlencodedReturnResponse(url, methodEnum, headers, dataMap);
+    }
+
+    public static  String doXWWWFormUrlencodedReturnString(String url,HttpMethodEnum methodEnum, Map<String,String> headers, String dataMap){
+        return httpOperation.doXWWWFormUrlencodedReturnString(url, methodEnum, headers, dataMap);
+    }
+
+    public static  <T> T doXWWWFormUrlencodedReturnObject(String url,HttpMethodEnum methodEnum, Map<String,String> headers, String dataMap,Class<T> tClass){
+        return httpOperation.doXWWWFormUrlencodedReturnObject(url, methodEnum, headers, dataMap,tClass);
     }
 
     /**

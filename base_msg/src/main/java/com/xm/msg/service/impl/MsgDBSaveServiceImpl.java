@@ -9,12 +9,10 @@ import com.xm.core.msg.params.Msg;
 import com.xm.msg.domain.entity.TcMsg;
 import com.xm.msg.mapper.TcMsgMapper;
 import com.xm.msg.util.MsgConvertUtil;
-import com.xm.util.id.SnowIdUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;

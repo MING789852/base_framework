@@ -1,27 +1,34 @@
 package com.xm.util.msg;
 
 
+import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollectionUtil;
 import com.xm.advice.exception.exception.CommonException;
+import com.xm.core.msg.MsgResultHandleService;
 import com.xm.core.msg.MsgService;
 import com.xm.core.msg.params.Msg;
+import com.xm.core.msg.params.MsgSendResult;
 import com.xm.util.bean.SpringBeanUtil;
+import com.xm.util.thread.ThreadUtil;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Component;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
 
 @Slf4j
-@Component
 public class MsgUtil {
 
     private final static Map<String, MsgService> msgServiceMap;
+    private final static Map<String, MsgResultHandleService> msgResultHandleService;
 
     static {
         msgServiceMap=SpringBeanUtil.getBeanMapOfType(MsgService.class);
-        log.info("【消息】消息实现类->{}",msgServiceMap.keySet());
+        log.info("【消息】消息发送实现类->{}",msgServiceMap.keySet());
+        msgResultHandleService = SpringBeanUtil.getBeanMapOfType(MsgResultHandleService.class);
+        log.info("【消息】消息结果处理类->{}",msgResultHandleService.keySet());
     }
 
     private static void valid(){
@@ -43,13 +50,29 @@ public class MsgUtil {
             log.error(msg);
             throw new CommonException(msg);
         }
+        List<MsgSendResult> msgSendResultList=new ArrayList<>();
         for (String msgType:msgTypeList){
             MsgService msgService = msgServiceMap.get(msgType);
             if (msgService==null){
                 log.error("【消息】未引入消息实现类->{}",msgType);
                 continue;
             }
-            msgService.createOrUpdateMsg(msgList);
+            //克隆消息对象(添加消息类型)之后传值
+            List<Msg> copyList=new ArrayList<>();
+            for (Msg msg:msgList){
+                Msg copyMsg = BeanUtil.copyProperties(msg, Msg.class);
+                copyMsg.setType(msgType);
+                copyList.add(copyMsg);
+            }
+            MsgSendResult sendResult = msgService.createOrUpdateMsg(copyList);
+            msgSendResultList.add(sendResult);
+        }
+        if (CollectionUtil.isNotEmpty(msgSendResultList)&&CollectionUtil.isNotEmpty(msgResultHandleService)){
+            ThreadUtil.getExecutor().execute(() -> {
+                msgResultHandleService.forEach((key,value)->{
+                    value.execute(msgSendResultList);
+                });
+            });
         }
     }
 
@@ -60,15 +83,7 @@ public class MsgUtil {
     public static void createOrUpdateMsg(List<Msg> msgList){
         valid();
         for (Msg msg:msgList){
-            String msgType = msg.getType();
-            if (msgType!=null){
-                MsgService msgService = msgServiceMap.get(msgType);
-                if (msgService==null){
-                    log.error("【消息】未引入消息实现类->{}",msgType);
-                    continue;
-                }
-                msgService.createOrUpdateMsg(msgList);
-            }
+            createOrUpdateMsg(Collections.singletonList(msg), Collections.singletonList(msg.getType()));
         }
     }
 
@@ -102,5 +117,12 @@ public class MsgUtil {
             boolean flag = value.finishMsg(businessType, businessKey,userId);
             log.info("【消息】完成消息->{},{},{},返回结果->{}",businessType,businessKey,userId, flag);
         });
+    }
+
+    public static void finishMsgByMsgType(String msgType,String businessType, String businessKey,String userId){
+        valid();
+        MsgService msgService = msgServiceMap.get(msgType);
+        boolean flag = msgService.finishMsg(businessType, businessKey,userId);
+        log.info("【消息】完成消息->{},{},{},返回结果->{}",businessType,businessKey,userId, flag);
     }
 }

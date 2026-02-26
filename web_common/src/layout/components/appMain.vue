@@ -111,7 +111,7 @@ const transitionMain = defineComponent({
               >
                 <backTop />
               </el-backtop>
-              <div class="grow">
+              <div class="grow h-[0]">
                 <transitionMain :route="route">
                   <keep-alive
                     v-if="isKeepAlive"
@@ -135,7 +135,7 @@ const transitionMain = defineComponent({
               </div>
               <Footer v-if="!hideFooter" />
             </el-scrollbar>
-            <div v-else class="grow">
+            <div v-else class="grow h-[0]">
               <transitionMain :route="route">
                 <keep-alive
                   v-if="isKeepAlive"

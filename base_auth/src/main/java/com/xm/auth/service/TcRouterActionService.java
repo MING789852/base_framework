@@ -30,6 +30,8 @@ public interface TcRouterActionService{
     //用于展示角色对应有哪些路由操作
     List<String> getRouterActionRefByRole(TcRole role);
 
+    List<TcRouterAction> getRouterActionByUser(String userId,  List<String> routerIdList);
+
     List<TcRouterAction> getRouterActionByRoleAndRouter(List<String> roleIdList,List<String> routerIdList);
 
     List<TcRouterAction> getRouterActionDataByIdList(List<String> idList);

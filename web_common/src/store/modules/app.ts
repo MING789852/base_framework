@@ -4,14 +4,17 @@ import type { appType } from "./types";
 import { getConfig, responsiveStorageNameSpace } from "@/config";
 import {deviceDetection, isNullOrUnDef, storageLocal} from "@pureadmin/utils";
 
+
 export const useAppStore = defineStore({
   id: "pure-app",
   state: (): appType => ({
     sidebar: {
-      opened:
-        storageLocal().getItem<StorageConfigs>(
-          `${responsiveStorageNameSpace()}layout`
-        )?.sidebarStatus ?? getConfig().SidebarStatus,
+      // opened:
+      //   storageLocal().getItem<StorageConfigs>(
+      //     `${responsiveStorageNameSpace()}layout`
+      //   )?.sidebarStatus ?? getConfig().SidebarStatus,
+      // opened: false,
+      opened:getConfig().SidebarStatus,
       withoutAnimation: false,
       isClickCollapse: false
     },

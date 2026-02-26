@@ -1,6 +1,5 @@
 <template>
-  <div class="parent">
-    <el-card shadow="never">
+    <card-container :show-footer="false">
       <template #header>
         <div style="display: flex;justify-content: space-between">
           <el-button-group>
@@ -16,22 +15,21 @@
           </div>
         </div>
       </template>
-
-      <el-row :gutter="20">
-        <el-col :span="12">
-          <el-card shadow="never">
-            <el-scrollbar :style="{height: height}">
+      <div class="w-full h-full flex gap-6">
+        <div class="basis-1/2 h-full xm-card p-4">
+          <flex-full-scroll-container>
+            <el-scrollbar height="100%">
               <el-tree
-                ref="treeRef"
-                :data="treeData"
-                check-strictly
-                :show-checkbox="judgeComponent"
-                node-key="id"
-                :default-expanded-keys="expandedData"
-                :default-checked-keys="selectData"
-                :highlight-current="true"
-                :props="defaultProps"
-                :filter-node-method="filterNode"
+                  ref="treeRef"
+                  :data="treeData"
+                  check-strictly
+                  :show-checkbox="judgeComponent"
+                  node-key="id"
+                  :default-expanded-keys="expandedData"
+                  :default-checked-keys="selectData"
+                  :highlight-current="true"
+                  :props="defaultProps"
+                  :filter-node-method="filterNode"
               >
                 <template #default="{ node, data }">
                   <div style="display: flex;justify-content: space-between;width: 100%">
@@ -45,28 +43,23 @@
                 </template>
               </el-tree>
             </el-scrollbar>
-          </el-card>
-        </el-col>
-        <el-col :span="12">
-          <el-card shadow="never">
-            <common-table ref="commonTableRef" :table-type="'action'" :api="systemDeptApi" :columns="columns"
-                          :table-button="tableButton" :table-fn="tableFn" :show-header="false"
-                          :show-page="false" :show-selection="false"
-                          height="65vh">
-              <template #column>
-                <el-table-column header-align="center" align="center" label="操作" >
-                  <template #default="scope">
-                    <a style="cursor: pointer;color: #409EFF" @click="assignRoleByUser(scope.row)">分配角色</a>
-                  </template>
-                </el-table-column>
-              </template>
-            </common-table>
-          </el-card>
-        </el-col>
-      </el-row>
-    </el-card>
-
-  </div>
+          </flex-full-scroll-container>
+        </div>
+        <div class="basis-1/2">
+          <common-table ref="commonTableRef" :table-type="'action'" :api="systemDeptApi" :columns="columns"
+                        :table-button="tableButton" :table-fn="tableFn" :show-header="false"
+                        :show-page="false" :show-selection="false">
+            <template #column>
+              <el-table-column header-align="center" align="center" label="操作" >
+                <template #default="scope">
+                  <a style="cursor: pointer;color: #409EFF" @click="assignRoleByUser(scope.row)">分配角色</a>
+                </template>
+              </el-table-column>
+            </template>
+          </common-table>
+        </div>
+      </div>
+    </card-container>
 </template>
 
 <script setup lang="tsx">
@@ -84,7 +77,8 @@ import CommonTable from "@/components/table/commonTable.vue";
 import TableFnClass from "@/class/TableFnClass";
 import systemRoleApi from "@/api/systemRoleApi";
 import {isNullOrUnDef} from "@pureadmin/utils";
-import DetailForm from "@/components/detailForm/detailForm.vue";
+import CardContainer from "@/components/CardContainer/CardContainer.vue";
+import FlexFullScrollContainer from "@/components/FlexFullScrollContainer/FlexFullScrollContainer.vue";
 
 
 const treeRef = ref<InstanceType<typeof ElTree>>()
@@ -135,7 +129,6 @@ const tableButton = ref<CommonTableButton>({
   initQueryFn: false,
   exportExcelFn: false
 })
-const height=ref('70vh')
 const treeData = ref<Array<any>>([]);
 const query = ref<QueryDefine>({
   current: 1,
@@ -157,7 +150,7 @@ const checkDept = (node, data) => {
   checkDeptByDeptId(data.id)
 }
 const syncUser = (node, data) => {
-  common.handleRequestApi(systemDeptApi.createTcUserWithDeptId(data.id)).then((res:HttpResult)=>{
+  common.handleRequestApi(systemDeptApi.createTcUserWithDeptId([data.id])).then(()=>{
     checkDeptByDeptId(data.id)
     message('操作成功',{type:'success'})
   })
@@ -186,21 +179,15 @@ const assignRoleByUser = async (row) => {
   assignRolesDict['roleList'] = {}
   if (!isNullOrUnDef(roleList)) {
     roleList.forEach((item) => {
-      // assignRolesDict['roleList'][item.roleName] = item.id
       assignRolesDict['roleList'][item.id] = item.roleName
     })
   }
-  addDialog({
-    width: "40%",
-    title: "分配角色",
-    props: {
-      columns: assignRolesColumns,
-      propData: assignRolesData,
-      dictList: assignRolesDict
-    },
-    contentRenderer: () => DetailForm,
-    beforeSure(done, {options, index}) {
-      let propData: any = options.props.propData
+  let params:OpenInputDialogDefine = {
+    columns: assignRolesColumns,
+    dictMapping:assignRolesDict,
+    defaultValue:assignRolesData,
+    callBack: (result) => {
+      let propData: any = result.data
       if (isNullOrUnDef(propData.roleList)) {
         propData.roleList = []
       }
@@ -212,7 +199,7 @@ const assignRoleByUser = async (row) => {
         if (res.code === 200) {
           message('分配成功', {type: 'success'})
           getData()
-          done()
+          result.done()
         } else {
           message(res.msg, {type: 'error'})
         }
@@ -220,7 +207,8 @@ const assignRoleByUser = async (row) => {
         message(e, {type: 'error'})
       })
     }
-  })
+  }
+  common.openInputDialog(params)
 }
 const assignRoleByDept = async (node, data) => {
   const assignRoleByDeptData = ref({})
@@ -240,30 +228,25 @@ const assignRoleByDept = async (node, data) => {
   assignRoleByDeptDict['roleList'] = {}
   if (!isNullOrUnDef(roleList)) {
     roleList.forEach((item) => {
-      // assignRoleByDeptDict['roleList'][item.roleName] = item.id
       assignRoleByDeptDict['roleList'][item.id] = item.roleName
     })
   }
-  addDialog({
-    width: "40%",
-    title: "分配角色",
-    props: {
-      columns: assignRoleByDeptColumns,
-      propData: assignRoleByDeptData,
-      dictList: assignRoleByDeptDict
-    },
-    contentRenderer: () => DetailForm,
-    beforeSure(done, {options, index}) {
-      let propData: any = options.props.propData
+  let params:OpenInputDialogDefine = {
+    columns: assignRoleByDeptColumns,
+    dictMapping:assignRoleByDeptDict,
+    defaultValue:assignRoleByDeptData,
+    callBack: (result) => {
+      let propData: any = result.data
       if (isNullOrUnDef(propData.roleList)) {
         propData.roleList = []
       }
-      common.handleRequestApi(systemDeptApi.allocateRoleToDept(data.id,propData.roleList)).then((res:HttpResult)=>{
+      common.handleRequestApi(systemDeptApi.allocateRoleToDept(data.id,propData.roleList)).then(()=>{
         message('操作成功',{type:'success'})
-        done()
+        result.done()
       })
     }
-  })
+  }
+  common.openInputDialog(params)
 }
 
 const getData = () => {
@@ -390,10 +373,4 @@ const initFn = () => {
 </script>
 
 <style scoped lang="scss">
-  .parent {
-    height: 100%;
-  }
-  .parent> :first-child{
-    height: 100%;
-  }
 </style>
