@@ -50,9 +50,9 @@ spring:
     path match:
       matching-strategy: path_pattern_parser
   profiles:
-    #    active: local
-    #    active: dev
-    active: prod
+    active: local
+#    active: dev
+#    active: prod
   servlet:
     multipart:
       max-file-size: 100MB

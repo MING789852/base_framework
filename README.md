@@ -5,7 +5,8 @@
 ## 环境配置
 MYSQL8数据库（必选）
 REDIS（可选）
-RABBITMQ （可选）
+RABBITMQ（可选）
+KAFKA（可选）
 MINIO（可选）
 
 ## 前置准备

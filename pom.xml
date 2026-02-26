@@ -50,18 +50,10 @@
         <module>base_flowable</module>
         <module>base_form</module>
         <module>base_mini_program</module>
-
-        <module>base_business_other</module>
-        <module>base_business_quality</module>
-        <module>base_business_rd</module>
-        <module>base_business_demo</module>
-        <module>base_business_interface</module>
-        <module>base_business_weight</module>
-        <module>base_business_dataV</module>
-        <module>base_business_customhouse</module>
-        <module>base_otherSystem</module>
         <module>base_kafka</module>
-        <module>base_business_product</module>
+
+
+        <module>base_business_demo</module>
     </modules>
 
     <dependencyManagement>

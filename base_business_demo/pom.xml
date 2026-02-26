@@ -95,7 +95,7 @@
     </dependencies>
 
     <build>
-        <finalName>base_rd</finalName>
+        <finalName>base_demo</finalName>
         <plugins>
             <plugin>
                 <groupId>org.springframework.boot</groupId>
